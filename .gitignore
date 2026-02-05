@@ -1,0 +1,71 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Python
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+/static_root
+
+# Environment variables
+.env
+.env.local
+*.env
+
+# IDE - VSCode
+.vscode/
+*.code-workspace
+
+# IDE - PyCharm
+.idea/
+*.iml
+*.iws
+
+# IDE - Sublime
+*.sublime-project
+*.sublime-workspace
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Migrations (optional - some keep these in Git)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Local settings
+local_settings.py
+
+# Backup files
+*.bak
+*.swp
+*~
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
