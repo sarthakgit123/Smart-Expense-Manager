@@ -91,10 +91,34 @@ class Budget(models.Model):
     month = models.PositiveIntegerField()  # 1–12
     year = models.PositiveIntegerField()
 
+    
+
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    alert_sent = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('user', 'category', 'month', 'year')
 
     def __str__(self):
         return f"{self.category.name} - {self.month}/{self.year}"
+     
+    def get_spent_amount(self):
+        """Calculate total spent in this budget period"""
+        from django.db.models import Sum
+        spent = Transaction.objects.filter(
+            user=self.user,
+            category=self.category,
+            transaction_type='EX',
+            date__month=self.month,
+            date__year=self.year
+        ).aggregate(total=Sum('amount'))['total']
+        return spent or 0
+    
+    def get_remaining(self):
+        """Calculate remaining budget"""
+        return self.monthly_limit - self.get_spent_amount()
+    
+    def is_over_budget(self):
+        """Check if spending exceeds budget"""
+        return self.get_spent_amount() > self.monthly_limit

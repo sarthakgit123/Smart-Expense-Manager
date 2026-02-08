@@ -7,11 +7,27 @@
 
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Dashboard</h2>
+    <h2>Dashboard</h2>
+
+    <div>
+        <a href="{% url 'accounts:category-add' %}" class="btn btn-outline-secondary me-2">
+            + Add Category
+        </a>
+
         <a href="{% url 'accounts:transaction-add' %}" class="btn btn-primary">
             + Add Transaction
         </a>
+        <a href="{% url 'accounts:monthly-report' %}" class="btn btn-outline-info me-2">
+        📊 Monthly Report
+        </a>
+        <a href="{% url 'accounts:budget-add' %}" class="btn btn-outline-warning me-2">
+    + Add Budget
+</a>
+        
+
     </div>
+</div>
+
 
     <!-- Summary cards -->
     <div class="row">
@@ -42,6 +58,10 @@
             </div>
         </div>
     </div>
+    <div class="row mt-5">
+
+</div>
+
 
     <!-- Transactions table -->
     <div class="card mt-4">
@@ -98,7 +118,76 @@
                 </tbody>
             </table>
         </div>
-    </div>
-
+    </div> 
 </div>
+
+
+
+<div class="card mt-5">
+
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Category</th>
+          <th>Limit</th>
+          <th>Spent</th>
+          <th>Remaining</th>
+          <th>Status</th>
+          <th style="width: 140px;">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for budget in budgets %}
+        <tr>
+          <td>{{ budget.category.name }}</td>
+
+          <td>₹ {{ budget.monthly_limit }}</td>
+
+          <td>₹ {{ budget.get_spent_amount }}</td>
+
+          <td>
+            {% if budget.is_over_budget %}
+              <span class="text-danger">
+                ₹ {{ budget.get_remaining }}
+              </span>
+            {% else %}
+              ₹ {{ budget.get_remaining }}
+            {% endif %}
+          </td>
+
+          <td>
+            {% if budget.is_over_budget %}
+              <span class="badge bg-danger">Over Budget</span>
+            {% else %}
+              <span class="badge bg-success">On Track</span>
+            {% endif %}
+          </td>
+
+         <td>
+  <a href="{% url 'accounts:budget-edit' budget.pk %}"
+     class="btn btn-sm btn-warning mb-1">
+    Edit
+  </a>
+
+  <a href="{% url 'accounts:budget-delete' budget.pk %}"
+     class="btn btn-sm btn-danger">
+    Delete
+  </a>
+</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-3">
+            No budgets set for this month
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
 {% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Report{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <h2 class="mb-4">Monthly Report</h2>
+
+    <!-- Filter Form -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label class="form-label">Month</label>
+            <input type="number" name="month" class="form-control"
+                   min="1" max="12" value="{{ month }}">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Year</label>
+            <input type="number" name="year" class="form-control"
+                   value="{{ year }}">
+        </div>
+
+        <div class="col-md-3 align-self-end">
+            <button type="submit" class="btn btn-primary">
+                Generate Report
+            </button>
+        </div>
+        <a href="{% url 'accounts:monthly-report-excel' %}?month={{ month }}&year={{ year }}"
+        class="col-md-3 align-self-end">
+        ⬇ Download Excel
+        </a>
+
+    </form>
+
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card bg-success text-white mb-3">
+                <div class="card-body">
+                    <h5>Total Income</h5>
+                    <h4>₹ {{ income }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-danger text-white mb-3">
+                <div class="card-body">
+                    <h5>Total Expense</h5>
+                    <h4>₹ {{ expense }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-primary text-white mb-3">
+                <div class="card-body">
+                    <h5>Savings</h5>
+                    <h4>₹ {{ savings }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Optional: Transactions Table -->
+    <div class="card mt-4">
+        <div class="card-header">
+            Transactions
+        </div>
+        <div class="card-body p-0">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr>
+                        <td>{{ t.date }}</td>
+                        <td>{{ t.category.name|default:"-" }}</td>
+                        <td>{{ t.get_transaction_type_display }}</td>
+                        <td>₹ {{ t.amount }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">
+                            No transactions for this month
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
