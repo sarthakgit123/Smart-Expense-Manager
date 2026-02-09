@@ -8,7 +8,12 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
+
 """
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 from pathlib import Path
 
@@ -40,9 +45,15 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts',
     'transactions',
+    'django.contrib.sites',
+    'allauth',  
+    'allauth.account',  
+    'allauth.socialaccount',  
+    'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
+    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -144,3 +155,32 @@ EMAIL_HOST_USER = 'sarthakkseth@gmail.com'
 EMAIL_HOST_PASSWORD = 'ogyshddqxubyrrzg'
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Site ID (required for django-allauth)
+SITE_ID = 1
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Allauth settings (NEW SYNTAX)
+ACCOUNT_LOGIN_METHODS = {'email'}  # ✅ Use email to login
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # ✅ Required fields
+SOCIALACCOUNT_AUTO_SIGNUP = True
+LOGIN_REDIRECT_URL = '/accounts/dashboard/'
+SOCIALACCOUNT_QUERY_EMAIL = True
+
+# Google OAuth settings
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        "APP": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+            "key": ""
+        }
+    }
+}

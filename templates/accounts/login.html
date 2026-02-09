@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load socialaccount %}
 
 {% block title %}Login{% endblock %}
 
@@ -8,7 +9,20 @@
         <div class="card">
             <div class="card-body">
                 <h3 class="text-center mb-4">Login</h3>
+                   <!-- Google Sign-In Button -->
+                <div class="d-grid mb-3">
+                    <a href="{% url 'google_login' %}" class="btn btn-outline-danger">
+                        Sign in with Google
+                    </a>
+                </div>
                 
+                <div class="text-center mb-3">
+                    <small class="text-muted">or</small>
+                </div>
+                
+                
+                
+                <!-- Regular Login Form -->
                 <form method="post">
                     {% csrf_token %}
                     
@@ -24,9 +38,7 @@
                 </form>
                 
                 <p class="text-center mt-3 mb-0">
-                    <a href="{% url 'accounts:register' %}">
-                        Don't have an account? Register
-                    </a>
+                    <a href="{% url 'accounts:register' %}">Don't have an account? Register</a>
                 </p>
             </div>
         </div>
