@@ -39,7 +39,38 @@ def register_view(request):
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
 
-        if password1 == password2:
+        # Validation
+        errors = []
+        
+        if not username or not email or not password1 or not password2:
+            errors.append('All fields are required.')
+        
+        if password1 != password2:
+            errors.append('Passwords do not match.')
+        
+        if len(password1) < 8:
+            errors.append('Password must be at least 8 characters long.')
+        
+        # Check if username already exists
+        if User.objects.filter(username=username).exists():
+            errors.append('Username already exists. Please choose a different username.')
+        
+        # Check if email already exists
+        if User.objects.filter(email=email).exists():
+            errors.append('Email already registered. Please use a different email.')
+        
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+            return render(request, 'accounts/register.html', {
+                'username': username,
+                'first_name': first_name,
+                'last_name': last_name,
+                'email': email,
+            })
+        
+        # Create user
+        try:
             user = User.objects.create_user(
                 username=username,
                 email=email,
@@ -48,10 +79,13 @@ def register_view(request):
                 last_name=last_name
             )
             login(request, user)
+            messages.success(request, f'Welcome {first_name}! Your account has been created.')
             return redirect('accounts:dashboard')
+        except IntegrityError:
+            messages.error(request, 'An error occurred. Username or email may already exist.')
+            return render(request, 'accounts/register.html')
 
     return render(request, 'accounts/register.html')
-
 
 def login_view(request):
     if request.user.is_authenticated:
