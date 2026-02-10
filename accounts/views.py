@@ -237,9 +237,6 @@ class TransactionCreateView(CreateView):
     success_url = reverse_lazy('accounts:dashboard')
 
     def get_initial(self):
-        """
-        Pre-fill transaction_type from GET so the form stays in sync
-        """
         initial = super().get_initial()
         tx_type = self.request.GET.get('transaction_type')
         if tx_type in ['IN', 'EX']:
@@ -249,18 +246,15 @@ class TransactionCreateView(CreateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
 
-        # 🔑 Single source of truth for transaction type
         tx_type = (
             self.request.GET.get('transaction_type')
             or form.initial.get('transaction_type')
         )
 
-        # ✅ Base queryset: DEFAULT + USER categories
         qs = Category.objects.filter(
             Q(is_default=True) | Q(user=self.request.user)
         )
 
-        # ✅ Filter by Income / Expense if selected
         if tx_type in ['IN', 'EX']:
             qs = qs.filter(category_type=tx_type)
 
@@ -271,11 +265,8 @@ class TransactionCreateView(CreateView):
         form.instance.user = self.request.user
         response = super().form_valid(form)
 
-        # 🔔 Budget alert logic (unchanged)
         self.check_budget_alert(form.instance)
         return response
-
-    
 
     def check_budget_alert(self, transaction):
         if transaction.transaction_type != 'EX':
@@ -283,24 +274,24 @@ class TransactionCreateView(CreateView):
 
         today = now().date()
         budgets = Budget.objects.filter(
-        user=transaction.user,
-        category=transaction.category,
-        month=today.month,
-        year=today.year,
-        alert_sent=False,
-    )
+            user=transaction.user,
+            category=transaction.category,
+            month=today.month,
+            year=today.year,
+            alert_sent=False,
+        )
 
-    for budget in budgets:
-        spent = budget.get_spent_amount()
-        if spent > budget.monthly_limit:
-            send_email_async(
-                send_budget_alert,
-                transaction.user,
-                budget,
-                spent,
-            )
-            budget.alert_sent = True
-            budget.save()
+        for budget in budgets:
+            spent = budget.get_spent_amount()
+            if spent > budget.monthly_limit:
+                send_email_async(
+                    send_budget_alert,
+                    transaction.user,
+                    budget,
+                    spent,
+                )
+                budget.alert_sent = True
+                budget.save()
 
 class TransactionUpdateView(UpdateView):
     model = Transaction
