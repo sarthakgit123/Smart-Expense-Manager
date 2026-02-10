@@ -14,7 +14,7 @@ from accounts.utils import send_budget_alert
 from django.utils.timezone import now
 from django.db.models.functions import ExtractMonth
 from django.db.models import Q
-
+from .utils import send_email_async
 
 
 
@@ -275,25 +275,32 @@ class TransactionCreateView(CreateView):
         self.check_budget_alert(form.instance)
         return response
 
+    
+
     def check_budget_alert(self, transaction):
         if transaction.transaction_type != 'EX':
             return
 
-        today = transaction.date
+        today = now().date()
         budgets = Budget.objects.filter(
-            user=transaction.user,
-            category=transaction.category,
-            month=today.month,
-            year=today.year,
-            alert_sent=False
-        )
+        user=transaction.user,
+        category=transaction.category,
+        month=today.month,
+        year=today.year,
+        alert_sent=False,
+    )
 
-        for budget in budgets:
-            spent = budget.get_spent_amount()
-            if spent > budget.monthly_limit:
-                send_budget_alert(transaction.user, budget, spent)
-                budget.alert_sent = True
-                budget.save()
+    for budget in budgets:
+        spent = budget.get_spent_amount()
+        if spent > budget.monthly_limit:
+            send_email_async(
+                send_budget_alert,
+                transaction.user,
+                budget,
+                spent,
+            )
+            budget.alert_sent = True
+            budget.save()
 
 class TransactionUpdateView(UpdateView):
     model = Transaction
