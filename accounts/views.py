@@ -32,12 +32,12 @@ def register_view(request):
         return redirect('accounts:dashboard')
 
     if request.method == 'POST':
-        username = request.POST.get('username')
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        password1 = request.POST.get('password1')
-        password2 = request.POST.get('password2')
+        username = request.POST.get('username', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        password1 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
 
         # Validation
         errors = []
@@ -60,14 +60,21 @@ def register_view(request):
             errors.append('Email already registered. Please use a different email.')
         
         if errors:
+            # Clear existing messages first
+            storage = messages.get_messages(request)
+            storage.used = True
+            
+            # Add new error messages
             for error in errors:
                 messages.error(request, error)
-            return render(request, 'accounts/register.html', {
+            
+            context = {
                 'username': username,
                 'first_name': first_name,
                 'last_name': last_name,
                 'email': email,
-            })
+            }
+            return render(request, 'accounts/register.html', context)
         
         # Create user
         try:
@@ -78,13 +85,18 @@ def register_view(request):
                 first_name=first_name,
                 last_name=last_name
             )
-            login(request, user)
+            # FIX: Specify the backend explicitly
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, f'Welcome {first_name}! Your account has been created.')
             return redirect('accounts:dashboard')
         except IntegrityError:
             messages.error(request, 'An error occurred. Username or email may already exist.')
             return render(request, 'accounts/register.html')
-
+    
+    # GET request - clear any old messages
+    storage = messages.get_messages(request)
+    storage.used = True
+    
     return render(request, 'accounts/register.html')
 
 def login_view(request):
