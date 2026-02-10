@@ -190,4 +190,60 @@
 </div>
 
 
+
+
+<h3>Monthly Income vs Expense ({{ current_year }})</h3>
+<form method="get">
+    <label>Select Year:</label>
+    <select name="year" onchange="this.form.submit()">
+        {% for y in years %}
+            <option value="{{ y.year }}"
+                {% if y.year == selected_year %}selected{% endif %}>
+                {{ y.year }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
+<canvas id="monthlyBarChart"></canvas>
+
+<script>
+    const incomeData = {{ monthly_income|safe }};
+    const expenseData = {{ monthly_expense|safe}};
+
+    const ctx = document.getElementById('monthlyBarChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [
+                'Jan','Feb','Mar','Apr','May','Jun',
+                'Jul','Aug','Sep','Oct','Nov','Dec'
+            ],
+            datasets: [
+                {
+                    label: 'Income',
+                    data: incomeData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)'
+                },
+                {
+                    label: 'Expense',
+                    data: expenseData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+</script>
+
+
 {% endblock %}

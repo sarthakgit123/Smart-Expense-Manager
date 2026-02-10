@@ -12,6 +12,9 @@ from datetime import date
 from calendar import monthrange
 from accounts.utils import send_budget_alert
 from django.utils.timezone import now
+from django.db.models.functions import ExtractMonth
+from django.db.models import Q
+
 
 
 
@@ -77,13 +80,18 @@ def logout_view(request):
 # ---------------------------
 
 from datetime import datetime
-
 @login_required
 def dashboard_view(request):
-    transactions = Transaction.objects.filter(
-        user=request.user
-    )
+    transactions = Transaction.objects.filter(user=request.user)
 
+    # -------------------------------
+    # 🔹 YEAR SELECTION
+    # -------------------------------
+    selected_year = int(request.GET.get('year', date.today().year))
+
+    # -------------------------------
+    # TOTALS
+    # -------------------------------
     income_total = transactions.filter(
         transaction_type='IN'
     ).aggregate(total=Sum('amount'))['total'] or 0
@@ -92,50 +100,82 @@ def dashboard_view(request):
         transaction_type='EX'
     ).aggregate(total=Sum('amount'))['total'] or 0
 
-    # Expense by category (for pie chart)
+    # -------------------------------
+    # PIE CHART: Expense by Category
+    # -------------------------------
     expense_by_category = (
         transactions
-        .filter(transaction_type='EX')
+        .filter(transaction_type='EX', date__year=selected_year)
         .values('category__name')
         .annotate(total=Sum('amount'))
     )
 
-    # Get current month budgets
-    now = datetime.now()
+    # -------------------------------
+    # 🔥 BAR CHART: Monthly Income vs Expense
+    # -------------------------------
+    monthly_data = (
+        transactions
+        .filter(date__year=selected_year)
+        .annotate(month=ExtractMonth('date'))
+        .values('month', 'transaction_type')
+        .annotate(total=Sum('amount'))
+        .order_by('month')
+    )
+
+    monthly_income = [0] * 12
+    monthly_expense = [0] * 12
+
+    for item in monthly_data:
+        idx = item['month'] - 1
+        if item['transaction_type'] == 'IN':
+            monthly_income[idx] = float(item['total'])
+        else:
+            monthly_expense[idx] = float(item['total'])
+
+    # -------------------------------
+    # AVAILABLE YEARS (for dropdown)
+    # -------------------------------
+    years = (
+    transactions
+    .dates('date', 'year')
+    )
+
+    # -------------------------------
+    # BUDGETS (Current Month Only)
+    # -------------------------------
+    today = date.today()
     budgets = Budget.objects.filter(
         user=request.user,
-        month=now.month,
-        year=now.year
+        month=today.month,
+        year=today.year
     )
-    
-    # Add calculated fields to budgets
-    budget_data = []
-    for budget in budgets:
-        budget_data.append({
-            'category': budget.category,
-            'monthly_limit': budget.monthly_limit,
-            'spent_amount': budget.get_spent_amount(),
-            'remaining_amount': budget.get_remaining(),
-            'is_over_budget': budget.is_over_budget()
-        })
 
     context = {
-    'transactions': transactions.order_by('-date')[:10],
-    'total_income': income_total,
-    'total_expense': expense_total,
-    'savings': income_total - expense_total,
+        'transactions': transactions.order_by('-date')[:10],
 
-    'expense_labels': [
-        e['category__name'] or 'Uncategorized'
-        for e in expense_by_category
-    ],
-    'expense_data': [
-        float(e['total']) for e in expense_by_category
-    ],
+        'total_income': income_total,
+        'total_expense': expense_total,
+        'savings': income_total - expense_total,
 
+        # PIE CHART
+        'expense_labels': [
+            e['category__name'] or 'Uncategorized'
+            for e in expense_by_category
+        ],
+        'expense_data': [
+            float(e['total']) for e in expense_by_category
+        ],
 
-    'budgets': budgets,
-}
+        # BAR CHART
+        'monthly_income': monthly_income,
+        'monthly_expense': monthly_expense,
+
+        # YEAR SELECT
+        'selected_year': selected_year,
+        'years': years,
+
+        'budgets': budgets,
+    }
 
     return render(request, 'accounts/dashboard.html', context)
 
@@ -146,17 +186,47 @@ def dashboard_view(request):
 
 class TransactionCreateView(CreateView):
     model = Transaction
-    fields = ['category', 'transaction_type', 'amount', 'description', 'date']
+    fields = ['transaction_type', 'category', 'amount', 'description', 'date']
     template_name = 'accounts/transaction_form.html'
     success_url = reverse_lazy('accounts:dashboard')
+
+    def get_initial(self):
+        """
+        Pre-fill transaction_type from GET so the form stays in sync
+        """
+        initial = super().get_initial()
+        tx_type = self.request.GET.get('transaction_type')
+        if tx_type in ['IN', 'EX']:
+            initial['transaction_type'] = tx_type
+        return initial
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+
+        # 🔑 Single source of truth for transaction type
+        tx_type = (
+            self.request.GET.get('transaction_type')
+            or form.initial.get('transaction_type')
+        )
+
+        # ✅ Base queryset: DEFAULT + USER categories
+        qs = Category.objects.filter(
+            Q(is_default=True) | Q(user=self.request.user)
+        )
+
+        # ✅ Filter by Income / Expense if selected
+        if tx_type in ['IN', 'EX']:
+            qs = qs.filter(category_type=tx_type)
+
+        form.fields['category'].queryset = qs
+        return form
 
     def form_valid(self, form):
         form.instance.user = self.request.user
         response = super().form_valid(form)
 
-        # 🔔 CHECK BUDGET AFTER TRANSACTION
+        # 🔔 Budget alert logic (unchanged)
         self.check_budget_alert(form.instance)
-
         return response
 
     def check_budget_alert(self, transaction):
@@ -179,16 +249,26 @@ class TransactionCreateView(CreateView):
                 budget.alert_sent = True
                 budget.save()
 
-
-
 class TransactionUpdateView(UpdateView):
     model = Transaction
-    fields = ['category', 'transaction_type', 'amount', 'description', 'date']
+    fields = ['transaction_type', 'category', 'amount', 'description', 'date']
     template_name = 'accounts/transaction_form.html'
     success_url = reverse_lazy('accounts:dashboard')
 
     def get_queryset(self):
         return Transaction.objects.filter(user=self.request.user)
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+
+        # Filter categories based on existing transaction type
+        qs = Category.objects.filter(
+            user=self.request.user,
+            category_type=self.object.transaction_type
+        )
+
+        form.fields['category'].queryset = qs
+        return form
 
 
 class TransactionDeleteView(DeleteView):
@@ -198,6 +278,7 @@ class TransactionDeleteView(DeleteView):
 
     def get_queryset(self):
         return Transaction.objects.filter(user=self.request.user)
+
     
 # ---------------------------
 # CATEGORY CRUD (HTML)
@@ -267,6 +348,9 @@ def monthly_report_view(request):
         date__range=(start_date, end_date)
     )
 
+    # -----------------------
+    # Totals
+    # -----------------------
     income = transactions.filter(
         transaction_type='IN'
     ).aggregate(total=Sum('amount'))['total'] or 0
@@ -275,6 +359,19 @@ def monthly_report_view(request):
         transaction_type='EX'
     ).aggregate(total=Sum('amount'))['total'] or 0
 
+    # -----------------------
+    # Category-wise Expense (Pie Chart)
+    # -----------------------
+    expense_by_category = (
+        transactions
+        .filter(transaction_type='EX')
+        .values('category__name')
+        .annotate(total=Sum('amount'))
+    )
+
+    # -----------------------
+    # Context
+    # -----------------------
     context = {
         'month': month,
         'year': year,
@@ -282,6 +379,15 @@ def monthly_report_view(request):
         'expense': float(expense),
         'savings': float(income - expense),
         'transactions': transactions,
+
+        # Pie chart data
+        'expense_category_labels': [
+            e['category__name'] or 'Uncategorized'
+            for e in expense_by_category
+        ],
+        'expense_category_data': [
+            float(e['total']) for e in expense_by_category
+        ],
     }
 
     return render(request, 'accounts/monthly_report.html', context)
@@ -340,6 +446,7 @@ def monthly_report_excel(request):
 
     wb.save(response)
     return response
+    
 
 # ---------------------------
 # BUDGET CRUD (HTML)

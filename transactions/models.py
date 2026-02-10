@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+
 class Category(models.Model):
     INCOME = 'IN'
     EXPENSE = 'EX'
@@ -11,24 +12,33 @@ class Category(models.Model):
         (EXPENSE, 'Expense'),
     ]
 
+    # NULL user → global default category
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name='categories'
     )
+
     name = models.CharField(max_length=100)
+
     category_type = models.CharField(
         max_length=2,
         choices=CATEGORY_TYPE_CHOICES
     )
 
+    # Marks default/global categories
+    is_default = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        # Allows same name for default and user category
         unique_together = ('user', 'name', 'category_type')
 
     def __str__(self):
-        return f"{self.name} ({self.get_category_type_display()})"
+        return self.name
 
 
 class Transaction(models.Model):

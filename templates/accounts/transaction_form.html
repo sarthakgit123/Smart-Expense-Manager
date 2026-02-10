@@ -7,6 +7,7 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-body">
+
                 <h3 class="mb-4">
                     {% if object %}
                         Edit Transaction
@@ -15,10 +16,53 @@
                     {% endif %}
                 </h3>
 
+                <!-- STEP 1: FILTER (GET) -->
+                {% if not object %}
+                <form method="get" class="mb-3">
+                    <div class="mb-2">
+                        {{ form.transaction_type.label_tag }}
+                        {{ form.transaction_type }}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        Select Type
+                    </button>
+                </form>
+                <hr>
+                {% endif %}
+
+                <!-- STEP 2: SAVE (POST) -->
                 <form method="post">
                     {% csrf_token %}
-                    
-                    {{ form.as_p }}
+
+                    <!-- 🔴 REQUIRED: transaction_type MUST be in POST -->
+                    <div class="mb-2">
+                        {{ form.transaction_type.label_tag }}
+                        {{ form.transaction_type }}
+                    </div>
+
+                    <!-- CATEGORY -->
+                    <div class="mb-2">
+                        {{ form.category.label_tag }}
+                        {{ form.category }}
+                    </div>
+
+                    <!-- AMOUNT -->
+                    <div class="mb-2">
+                        {{ form.amount.label_tag }}
+                        {{ form.amount }}
+                    </div>
+
+                    <!-- DESCRIPTION -->
+                    <div class="mb-2">
+                        {{ form.description.label_tag }}
+                        {{ form.description }}
+                    </div>
+
+                    <!-- DATE -->
+                    <div class="mb-2">
+                        {{ form.date.label_tag }}
+                        {{ form.date }}
+                    </div>
 
                     <div class="mt-3">
                         <button type="submit" class="btn btn-success">
@@ -30,6 +74,7 @@
                         </a>
                     </div>
                 </form>
+
             </div>
         </div>
     </div>

@@ -98,6 +98,46 @@
         </div>
     </div>
 </div>
+<!-- Expense by Category Pie Chart -->
+<div class="card mt-4">
+    <div class="card-header">
+        Expense Distribution by Category
+    </div>
+    <div class="card-body">
+        <canvas id="expenseCategoryChart"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const labels = {{ expense_category_labels|safe }};
+    const data = {{ expense_category_data|safe }};
+
+    if (labels.length > 0) {
+        new Chart(document.getElementById('expenseCategoryChart'), {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,   // 🔑 KEY FIX
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 
 
 {% endblock %}
