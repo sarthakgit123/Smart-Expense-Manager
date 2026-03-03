@@ -3,83 +3,275 @@
 {% block title %}Transaction{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
 
-                <h3 class="mb-4">
-                    {% if object %}
-                        Edit Transaction
-                    {% else %}
-                        Add Transaction
-                    {% endif %}
-                </h3>
+<style>
+  .form-wrap {
+    max-width: 480px;
+    margin: 40px auto;
+  }
 
-                <!-- STEP 1: FILTER (GET) -->
-                {% if not object %}
-                <form method="get" class="mb-3">
-                    <div class="mb-2">
-                        {{ form.transaction_type.label_tag }}
-                        {{ form.transaction_type }}
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-sm">
-                        Select Type
-                    </button>
-                </form>
-                <hr>
-                {% endif %}
+  .form-card {
+    background: #1a1d27;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    overflow: hidden;
+  }
 
-                <!-- STEP 2: SAVE (POST) -->
-                <form method="post">
-                    {% csrf_token %}
+  .form-card-header {
+    padding: 20px 28px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-                    <!-- 🔴 REQUIRED: transaction_type MUST be in POST -->
-                    <div class="mb-2">
-                        {{ form.transaction_type.label_tag }}
-                        {{ form.transaction_type }}
-                    </div>
+  .form-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #e8eaf2;
+    letter-spacing: -0.2px;
+  }
 
-                    <!-- CATEGORY -->
-                    <div class="mb-2">
-                        {{ form.category.label_tag }}
-                        {{ form.category }}
-                    </div>
+  .form-card-body {
+    padding: 24px 28px;
+  }
 
-                    <!-- AMOUNT -->
-                    <div class="mb-2">
-                        {{ form.amount.label_tag }}
-                        {{ form.amount }}
-                    </div>
+  /* ── Field groups ── */
+  .f-group {
+    margin-bottom: 18px;
+  }
 
-                    <!-- DESCRIPTION -->
-                    <div class="mb-2">
-                        {{ form.description.label_tag }}
-                        {{ form.description }}
-                    </div>
+  .f-label {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    color: #50566e;
+    margin-bottom: 7px;
+  }
 
-                    <!-- DATE -->
-                    <div class="mb-2">
-                        {{ form.date.label_tag }}
-                        {{ form.date }}
-                        <small class="text-muted">
-                        Format: MM/DD/YYYY (example: 02/10/2026)
-                        </small>
-                    </div>
+  /* Override all Django form inputs */
+  .f-group input,
+  .f-group select,
+  .f-group textarea,
+  .form-card input[type="text"],
+  .form-card input[type="number"],
+  .form-card input[type="date"],
+  .form-card select,
+  .form-card textarea {
+    width: 100%;
+    background: #111318 !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 8px !important;
+    color: #e8eaf2 !important;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    padding: 9px 13px !important;
+    outline: none;
+    transition: border-color 0.15s;
+    box-shadow: none !important;
+    -webkit-appearance: none;
+  }
 
-                    <div class="mt-3">
-                        <button type="submit" class="btn btn-success">
-                            Save
-                        </button>
-                        <a href="{% url 'accounts:dashboard' %}"
-                           class="btn btn-secondary">
-                            Cancel
-                        </a>
-                    </div>
-                </form>
+  .f-group input:focus,
+  .f-group select:focus,
+  .f-group textarea:focus,
+  .form-card input:focus,
+  .form-card select:focus,
+  .form-card textarea:focus {
+    border-color: #5b8dee !important;
+    box-shadow: 0 0 0 3px rgba(91,141,238,0.12) !important;
+  }
 
-            </div>
-        </div>
+  /* Select arrow */
+  .form-card select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23848aa8' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    padding-right: 32px !important;
+    cursor: pointer;
+  }
+
+  /* Select options */
+  .form-card select option {
+    background: #1a1d27;
+    color: #e8eaf2;
+  }
+
+  .f-hint {
+    font-size: 0.72rem;
+    color: #50566e;
+    margin-top: 5px;
+  }
+
+  /* ── Divider ── */
+  .f-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.05);
+    margin: 22px 0;
+  }
+
+  /* ── Buttons ── */
+  .f-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .f-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .f-btn-primary {
+    background: #5b8dee;
+    color: #fff;
+    border-color: #5b8dee;
+    flex: 1;
+  }
+  .f-btn-primary:hover {
+    background: #4a7cde;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(91,141,238,0.3);
+  }
+
+  .f-btn-ghost {
+    background: transparent;
+    color: #848aa8;
+    border-color: rgba(255,255,255,0.08);
+  }
+  .f-btn-ghost:hover {
+    color: #e8eaf2;
+    border-color: rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.04);
+  }
+
+  /* ── Type selector step ── */
+  .type-prompt {
+    text-align: center;
+    padding: 8px 0 4px;
+  }
+
+  .type-prompt p {
+    color: #848aa8;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+  }
+
+  .type-select-wrap {
+    margin-bottom: 20px;
+  }
+</style>
+
+<div class="form-wrap">
+  <div class="form-card">
+
+    <div class="form-card-header">
+      <span style="font-size:1.1rem;">{% if object %}✏️{% else %}➕{% endif %}</span>
+      <div class="form-card-title">
+        {% if object %}Edit Transaction{% else %}Add Transaction{% endif %}
+      </div>
     </div>
+
+    <div class="form-card-body">
+
+      <!-- STEP 1: SELECT TYPE -->
+      {% if not object and not request.GET.transaction_type %}
+      <div class="type-prompt">
+        <p>Choose the transaction type to continue</p>
+        <form method="get">
+          <div class="f-group type-select-wrap">
+            <label class="f-label">{{ form.transaction_type.label }}</label>
+            {{ form.transaction_type }}
+          </div>
+          <button type="submit" class="f-btn f-btn-primary" style="width:100%;">
+            Continue →
+          </button>
+        </form>
+      </div>
+      {% endif %}
+
+      <!-- STEP 2: MAIN FORM -->
+      {% if object or request.GET.transaction_type %}
+      <form method="post">
+        {% csrf_token %}
+
+        {% if not object %}
+          <input type="hidden" name="transaction_type" value="{{ request.GET.transaction_type }}">
+
+          <!-- Show type as read-only badge -->
+          <div class="f-group">
+            <label class="f-label">Type</label>
+            <div style="display:inline-flex; align-items:center; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+              {% if request.GET.transaction_type == 'IN' %}
+                background: rgba(34,199,122,0.12); color: #22c77a;
+              {% else %}
+                background: rgba(240,80,110,0.12); color: #f0506e;
+              {% endif %}
+            ">
+              {% if request.GET.transaction_type == 'IN' %}↑ Income{% else %}↓ Expense{% endif %}
+            </div>
+          </div>
+
+          <div class="f-divider"></div>
+
+        {% else %}
+          <div class="f-group">
+            <label class="f-label">{{ form.transaction_type.label }}</label>
+            {{ form.transaction_type }}
+          </div>
+        {% endif %}
+
+        <!-- CATEGORY -->
+        <div class="f-group">
+          <label class="f-label">{{ form.category.label }}</label>
+          {{ form.category }}
+        </div>
+
+        <!-- AMOUNT -->
+        <div class="f-group">
+          <label class="f-label">{{ form.amount.label }}</label>
+          {{ form.amount }}
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="f-group">
+          <label class="f-label">{{ form.description.label }}</label>
+          {{ form.description }}
+        </div>
+
+        <!-- DATE -->
+        <div class="f-group">
+          <label class="f-label">{{ form.date.label }}</label>
+          {{ form.date }}
+          <div class="f-hint">Format: MM/DD/YYYY &nbsp;·&nbsp; e.g. 02/10/2026</div>
+        </div>
+
+        <div class="f-divider"></div>
+
+        <div class="f-actions">
+          <button type="submit" class="f-btn f-btn-primary">
+            {% if object %}Save Changes{% else %}Add Transaction{% endif %}
+          </button>
+          <a href="{% url 'accounts:dashboard' %}" class="f-btn f-btn-ghost">Cancel</a>
+        </div>
+
+      </form>
+      {% endif %}
+
+    </div>
+  </div>
 </div>
+
 {% endblock %}

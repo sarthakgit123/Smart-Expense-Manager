@@ -3,141 +3,324 @@
 {% block title %}Monthly Report{% endblock %}
 
 {% block content %}
-<div class="container">
 
-    <h2 class="mb-4">Monthly Report</h2>
+<style>
+  .report-wrap {
+    padding-top: 28px;
+    padding-bottom: 48px;
+  }
 
-    <!-- Filter Form -->
-    <form method="get" class="row g-3 mb-4">
-        <div class="col-md-3">
-            <label class="form-label">Month</label>
-            <input type="number" name="month" class="form-control"
-                   min="1" max="12" value="{{ month }}">
-        </div>
+  .report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
 
-        <div class="col-md-3">
-            <label class="form-label">Year</label>
-            <input type="number" name="year" class="form-control"
-                   value="{{ year }}">
-        </div>
+  .report-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #e8eaf2;
+    letter-spacing: -0.3px;
+  }
 
-        <div class="col-md-3 align-self-end">
-            <button type="submit" class="btn btn-primary">
-                Generate Report
-            </button>
-        </div>
-        <a href="{% url 'accounts:monthly-report-excel' %}?month={{ month }}&year={{ year }}"
-        class="col-md-3 align-self-end">
-        ⬇ Download Excel
-        </a>
+  /* ── Filter bar ── */
+  .filter-card {
+    background: #1a1d27;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
 
-    </form>
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
 
-    <!-- Summary Cards -->
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card bg-success text-white mb-3">
-                <div class="card-body">
-                    <h5>Total Income</h5>
-                    <h4>₹ {{ income }}</h4>
-                </div>
-            </div>
-        </div>
+  .filter-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    color: #50566e;
+  }
 
-        <div class="col-md-4">
-            <div class="card bg-danger text-white mb-3">
-                <div class="card-body">
-                    <h5>Total Expense</h5>
-                    <h4>₹ {{ expense }}</h4>
-                </div>
-            </div>
-        </div>
+  .filter-input {
+    background: #111318 !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 8px !important;
+    color: #e8eaf2 !important;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    padding: 7px 12px !important;
+    outline: none;
+    width: 110px;
+    transition: border-color 0.15s;
+  }
+  .filter-input:focus {
+    border-color: #5b8dee !important;
+    box-shadow: 0 0 0 3px rgba(91,141,238,0.12) !important;
+  }
 
-        <div class="col-md-4">
-            <div class="card bg-primary text-white mb-3">
-                <div class="card-body">
-                    <h5>Savings</h5>
-                    <h4>₹ {{ savings }}</h4>
-                </div>
-            </div>
-        </div>
+  .f-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .f-btn-primary { background: #5b8dee; color: #fff; border-color: #5b8dee; }
+  .f-btn-primary:hover { background: #4a7cde; color: #fff; box-shadow: 0 4px 12px rgba(91,141,238,0.3); }
+  .f-btn-ghost { background: rgba(34,199,122,0.1); color: #22c77a; border-color: rgba(34,199,122,0.2); }
+  .f-btn-ghost:hover { background: rgba(34,199,122,0.18); color: #22c77a; }
+
+  /* ── Stat Cards ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  @media(max-width:640px){ .stat-row{ grid-template-columns:1fr; } }
+
+  .stat-card {
+    background: #1a1d27;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 18px 22px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.18s;
+  }
+  .stat-card:hover { transform: translateY(-2px); }
+  .stat-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:2px 2px 0 0; }
+  .sc-green::after { background: #22c77a; }
+  .sc-red::after   { background: #f0506e; }
+  .sc-blue::after  { background: #5b8dee; }
+  .stat-card::before { content:''; position:absolute; top:-40px; right:-40px; width:100px; height:100px; border-radius:50%; opacity:0.07; filter:blur(24px); pointer-events:none; }
+  .sc-green::before { background: #22c77a; }
+  .sc-red::before   { background: #f0506e; }
+  .sc-blue::before  { background: #5b8dee; }
+
+  .stat-tag { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#50566e; margin-bottom:6px; }
+  .stat-num { font-family:'JetBrains Mono', monospace; font-size:1.5rem; font-weight:500; letter-spacing:-0.5px; }
+  .sc-green .stat-num { color:#22c77a; }
+  .sc-red   .stat-num { color:#f0506e; }
+  .sc-blue  .stat-num { color:#5b8dee; }
+
+  /* ── Data Cards ── */
+  .d-card {
+    background: #1a1d27;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .d-card-head {
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #e8eaf2;
+  }
+
+  .d-card table { width:100%; border-collapse:collapse; }
+
+  .d-card thead th {
+    padding: 9px 18px;
+    background: rgba(255,255,255,0.025);
+    color: #50566e;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .d-card tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.12s; }
+  .d-card tbody tr:last-child { border-bottom: none; }
+  .d-card tbody tr:hover { background: #21253a; }
+  .d-card tbody td { padding: 11px 18px; color: #848aa8; font-size: 0.84rem; vertical-align: middle; }
+  .d-card tbody td:first-child { color: #e8eaf2; font-weight: 500; }
+
+  .empty-state td { text-align:center; padding:36px !important; color:#50566e; font-size:0.82rem; }
+
+  .pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.74rem; font-weight:600; }
+  .pill-green { background:rgba(34,199,122,0.12); color:#22c77a; }
+  .pill-red   { background:rgba(240,80,110,0.12); color:#f0506e; }
+  .mono { font-family:'JetBrains Mono',monospace; font-size:0.82rem; font-weight:500; }
+
+  /* ── Pie Chart ── */
+  .chart-card {
+    background: #1a1d27;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin-bottom: 40px;
+  }
+  .chart-card-title { font-size:0.88rem; font-weight:700; color:#e8eaf2; margin-bottom:20px; }
+  #expenseCategoryChart { max-height: 300px; }
+</style>
+
+<div class="report-wrap">
+
+  <!-- Header -->
+  <div class="report-header">
+    <div class="report-title">📊 Monthly Report</div>
+  </div>
+
+  <!-- Filter Bar -->
+  <form method="get">
+    <div class="filter-card">
+      <div class="filter-group">
+        <label class="filter-label">Month</label>
+        <input type="number" name="month" class="filter-input"
+               min="1" max="12" value="{{ month }}">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Year</label>
+        <input type="number" name="year" class="filter-input" value="{{ year }}">
+      </div>
+      <button type="submit" class="f-btn f-btn-primary">Generate Report</button>
+      <a href="{% url 'accounts:monthly-report-excel' %}?month={{ month }}&year={{ year }}"
+         class="f-btn f-btn-ghost">⬇ Download Excel</a>
     </div>
+  </form>
 
-    <!-- Optional: Transactions Table -->
-    <div class="card mt-4">
-        <div class="card-header">
-            Transactions
-        </div>
-        <div class="card-body p-0">
-            <table class="table mb-0">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Category</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for t in transactions %}
-                    <tr>
-                        <td>{{ t.date }}</td>
-                        <td>{{ t.category.name|default:"-" }}</td>
-                        <td>{{ t.get_transaction_type_display }}</td>
-                        <td>₹ {{ t.amount }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center">
-                            No transactions for this month
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+  <!-- Stat Cards -->
+  <div class="stat-row">
+    <div class="stat-card sc-green">
+      <div class="stat-tag">Total Income</div>
+      <div class="stat-num">₹ {{ income }}</div>
     </div>
+    <div class="stat-card sc-red">
+      <div class="stat-tag">Total Expense</div>
+      <div class="stat-num">₹ {{ expense }}</div>
+    </div>
+    <div class="stat-card sc-blue">
+      <div class="stat-tag">Savings</div>
+      <div class="stat-num">₹ {{ savings }}</div>
+    </div>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="d-card">
+    <div class="d-card-head">🗒 Transactions</div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in transactions %}
+          <tr>
+            <td>{{ t.date }}</td>
+            <td>{{ t.category.name|default:"—" }}</td>
+            <td>
+              {% if t.transaction_type == "IN" %}
+                <span class="pill pill-green">Income</span>
+              {% else %}
+                <span class="pill pill-red">Expense</span>
+              {% endif %}
+            </td>
+            <td class="mono">₹ {{ t.amount }}</td>
+          </tr>
+          {% empty %}
+          <tr class="empty-state">
+            <td colspan="4">No transactions for this month</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pie Chart -->
+  <div class="chart-card">
+    <div class="chart-card-title">🍩 Expense Distribution by Category</div>
+    <canvas id="expenseCategoryChart"></canvas>
+  </div>
+
 </div>
-<!-- Expense by Category Pie Chart -->
-<div class="card mt-4">
-    <div class="card-header">
-        Expense Distribution by Category
-    </div>
-    <div class="card-body">
-        <canvas id="expenseCategoryChart"></canvas>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  const labels = {{ expense_category_labels|safe }};
+  const data   = {{ expense_category_data|safe }};
 
-    const labels = {{ expense_category_labels|safe }};
-    const data = {{ expense_category_data|safe }};
-
-    if (labels.length > 0) {
-        new Chart(document.getElementById('expenseCategoryChart'), {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,   // 🔑 KEY FIX
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
+  if (labels.length > 0) {
+    new Chart(document.getElementById('expenseCategoryChart'), {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: [
+            'rgba(91,141,238,0.8)',
+            'rgba(240,80,110,0.8)',
+            'rgba(34,199,122,0.8)',
+            'rgba(245,166,35,0.8)',
+            'rgba(162,105,235,0.8)',
+            'rgba(0,196,196,0.8)',
+            'rgba(255,130,90,0.8)',
+          ],
+          borderColor: '#1a1d27',
+          borderWidth: 3,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#848aa8',
+              font: { family: 'Inter', size: 12 },
+              usePointStyle: true,
+              pointStyleWidth: 9,
+              padding: 18,
             }
-        });
-    }
+          },
+          tooltip: {
+            backgroundColor: '#21253a',
+            borderColor: 'rgba(255,255,255,0.07)',
+            borderWidth: 1,
+            titleColor: '#e8eaf2',
+            bodyColor: '#848aa8',
+            padding: 11,
+            callbacks: {
+              label: c => '  ₹ ' + c.parsed.toLocaleString()
+            }
+          }
+        }
+      }
+    });
+  }
 });
 </script>
-
 
 {% endblock %}

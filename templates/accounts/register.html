@@ -3,60 +3,232 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
-{% if messages %}
-    <div class="messages">
+
+<style>
+  .auth-wrap {
+    min-height: calc(100vh - 52px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+
+  .auth-card {
+    background: #1a1d27;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+  }
+
+  .auth-card-header {
+    padding: 26px 32px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    text-align: center;
+  }
+
+  .auth-logo {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #848aa8;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+  .auth-logo span { color: #5b8dee; }
+
+  .auth-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #e8eaf2;
+    letter-spacing: -0.4px;
+    margin-bottom: 4px;
+  }
+
+  .auth-sub {
+    font-size: 0.8rem;
+    color: #50566e;
+  }
+
+  .auth-card-body {
+    padding: 26px 32px 30px;
+  }
+
+  /* Alerts */
+  .auth-alert {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .auth-alert-error   { background: rgba(240,80,110,0.1);  color: #f0506e; border: 1px solid rgba(240,80,110,0.2); }
+  .auth-alert-success { background: rgba(34,199,122,0.1);  color: #22c77a; border: 1px solid rgba(34,199,122,0.2); }
+  .auth-alert-warning { background: rgba(245,166,35,0.1);  color: #f5a623; border: 1px solid rgba(245,166,35,0.2); }
+  .auth-alert-info    { background: rgba(91,141,238,0.1);  color: #5b8dee; border: 1px solid rgba(91,141,238,0.2); }
+
+  .alert-close {
+    background: none;
+    border: none;
+    color: inherit;
+    opacity: 0.6;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .alert-close:hover { opacity: 1; }
+
+  /* Two-col row */
+  .f-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .f-group { margin-bottom: 13px; }
+
+  .f-input {
+    width: 100%;
+    background: #111318 !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 9px !important;
+    color: #e8eaf2 !important;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.86rem;
+    padding: 10px 14px !important;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-shadow: none !important;
+  }
+  .f-input::placeholder { color: #50566e; }
+  .f-input:focus {
+    border-color: #5b8dee !important;
+    box-shadow: 0 0 0 3px rgba(91,141,238,0.12) !important;
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 10px;
+    background: #5b8dee;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-top: 8px;
+  }
+  .btn-submit:hover {
+    background: #4a7cde;
+    box-shadow: 0 4px 16px rgba(91,141,238,0.35);
+  }
+
+  .auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.8rem;
+    color: #50566e;
+  }
+  .auth-footer a {
+    color: #5b8dee;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .auth-footer a:hover { text-decoration: underline; }
+
+  /* Password strength hint */
+  .f-hint {
+    font-size: 0.7rem;
+    color: #50566e;
+    margin-top: 5px;
+  }
+</style>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+
+    <div class="auth-card-header">
+      <div class="auth-logo">Finance <span>Tracker</span></div>
+      <div class="auth-title">Create an account</div>
+      <div class="auth-sub">Start tracking your finances today</div>
+    </div>
+
+    <div class="auth-card-body">
+
+      <!-- Messages -->
+      {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}
-
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card">
-            <div class="card-body">
-                <h3 class="text-center mb-4">Register</h3>
-
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <input type="text" name="username" class="form-control" placeholder="Username" value="{{ username|default:'' }}" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <input type="text" name="first_name" class="form-control" placeholder="First Name" value="{{ first_name|default:'' }}" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <input type="text" name="last_name" class="form-control" placeholder="Last Name" value="{{ last_name|default:'' }}" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <input type="email" name="email" class="form-control" placeholder="Email" value="{{ email|default:'' }}" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <input type="password" name="password1" class="form-control" placeholder="Password" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <input type="password" name="password2" class="form-control" placeholder="Confirm Password" required>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100">Register</button>
-                </form>
-                
-                <p class="text-center mt-3 mb-0">
-                    <a href="{% url 'accounts:login' %}">
-                        Already have an account? Login
-                    </a>
-                </p>
-            </div>
+        <div class="auth-alert auth-alert-{{ message.tags }}">
+          <span>{{ message }}</span>
+          <button class="alert-close" onclick="this.parentElement.remove()">✕</button>
         </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <!-- Username -->
+        <div class="f-group">
+          <input type="text" name="username" class="f-input"
+                 placeholder="Username"
+                 value="{{ username|default:'' }}"
+                 required autocomplete="username">
+        </div>
+
+        <!-- First / Last name -->
+        <div class="f-row">
+          <div class="f-group">
+            <input type="text" name="first_name" class="f-input"
+                   placeholder="First Name"
+                   value="{{ first_name|default:'' }}" required>
+          </div>
+          <div class="f-group">
+            <input type="text" name="last_name" class="f-input"
+                   placeholder="Last Name"
+                   value="{{ last_name|default:'' }}" required>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="f-group">
+          <input type="email" name="email" class="f-input"
+                 placeholder="Email address"
+                 value="{{ email|default:'' }}"
+                 required autocomplete="email">
+        </div>
+
+        <!-- Passwords -->
+        <div class="f-group">
+          <input type="password" name="password1" class="f-input"
+                 placeholder="Password"
+                 required autocomplete="new-password">
+        </div>
+
+        <div class="f-group">
+          <input type="password" name="password2" class="f-input"
+                 placeholder="Confirm Password"
+                 required autocomplete="new-password">
+          <div class="f-hint">Use 8+ characters with a mix of letters and numbers</div>
+        </div>
+
+        <button type="submit" class="btn-submit">Create Account</button>
+      </form>
+
+      <div class="auth-footer">
+        Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a>
+      </div>
+
     </div>
+  </div>
 </div>
+
 {% endblock %}

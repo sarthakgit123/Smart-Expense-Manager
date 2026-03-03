@@ -2,41 +2,228 @@
 {% block title %}Add Budget{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-5">
-    <div class="card">
-      <div class="card-body">
-        <h3 class="mb-3">Set Monthly Budget</h3>
 
-        <form method="post">
-          {% csrf_token %}
+<style>
+  .form-wrap {
+    min-height: calc(100vh - 52px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
 
-          <div class="mb-3">
-            <label>Category</label>
-            {{ form.category }}
-          </div>
+  .form-card {
+    background: #1a1d27;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+  }
 
-          <div class="mb-3">
-            <label>Monthly Limit (₹)</label>
-            {{ form.monthly_limit }}
-          </div>
+  .form-card-header {
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-          <div class="mb-3">
-            <label>Month</label>
-            {{ form.month }}
-          </div>
+  .form-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #e8eaf2;
+    letter-spacing: -0.2px;
+  }
 
-          <div class="mb-3">
-            <label>Year</label>
-            {{ form.year }}
-          </div>
+  .form-card-sub {
+    font-size: 0.78rem;
+    color: #50566e;
+    margin-top: 2px;
+  }
 
-          <button type="submit" class="btn btn-primary">
-            Save Budget
-          </button>
-        </form>
+  .form-card-body {
+    padding: 24px 28px 28px;
+  }
+
+  /* Two-col grid for month/year */
+  .f-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .f-group { margin-bottom: 16px; }
+
+  .f-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    color: #50566e;
+    margin-bottom: 7px;
+  }
+
+  /* All Django-rendered inputs */
+  .form-card input,
+  .form-card select,
+  .form-card textarea {
+    width: 100%;
+    background: #111318 !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 9px !important;
+    color: #e8eaf2 !important;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.86rem;
+    padding: 10px 14px !important;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-shadow: none !important;
+    -webkit-appearance: none;
+  }
+
+  .form-card input::placeholder { color: #50566e; }
+
+  .form-card input:focus,
+  .form-card select:focus {
+    border-color: #5b8dee !important;
+    box-shadow: 0 0 0 3px rgba(91,141,238,0.12) !important;
+  }
+
+  /* Select arrow */
+  .form-card select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23848aa8' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    padding-right: 32px !important;
+    cursor: pointer;
+  }
+
+  .form-card select option { background: #1a1d27; color: #e8eaf2; }
+
+  /* Divider */
+  .f-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.05);
+    margin: 20px 0;
+  }
+
+  /* Buttons */
+  .f-actions { display: flex; gap: 10px; }
+
+  .f-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 22px;
+    border-radius: 9px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .f-btn-primary {
+    background: #f5a623;
+    color: #111318;
+    border-color: #f5a623;
+    flex: 1;
+  }
+  .f-btn-primary:hover {
+    background: #e09510;
+    color: #111318;
+    box-shadow: 0 4px 14px rgba(245,166,35,0.35);
+  }
+
+  .f-btn-ghost {
+    background: transparent;
+    color: #848aa8;
+    border-color: rgba(255,255,255,0.08);
+  }
+  .f-btn-ghost:hover {
+    color: #e8eaf2;
+    border-color: rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.04);
+  }
+
+  /* Limit input prefix */
+  .input-prefix-wrap {
+    position: relative;
+  }
+  .input-prefix {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #50566e;
+    font-size: 0.85rem;
+    font-weight: 600;
+    pointer-events: none;
+  }
+  .input-prefix-wrap input {
+    padding-left: 28px !important;
+  }
+</style>
+
+<div class="form-wrap">
+  <div class="form-card">
+
+    <div class="form-card-header">
+      <span style="font-size:1.2rem;">💰</span>
+      <div>
+        <div class="form-card-title">Set Monthly Budget</div>
+        <div class="form-card-sub">Define a spending limit per category</div>
       </div>
     </div>
+
+    <div class="form-card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <!-- Category -->
+        <div class="f-group">
+          <label class="f-label">Category</label>
+          {{ form.category }}
+        </div>
+
+        <!-- Monthly Limit -->
+        <div class="f-group">
+          <label class="f-label">Monthly Limit</label>
+          <div class="input-prefix-wrap">
+            <span class="input-prefix">₹</span>
+            {{ form.monthly_limit }}
+          </div>
+        </div>
+
+        <div class="f-divider"></div>
+
+        <!-- Month + Year side by side -->
+        <div class="f-row">
+          <div class="f-group">
+            <label class="f-label">Month</label>
+            {{ form.month }}
+          </div>
+          <div class="f-group">
+            <label class="f-label">Year</label>
+            {{ form.year }}
+          </div>
+        </div>
+
+        <div class="f-divider"></div>
+
+        <div class="f-actions">
+          <button type="submit" class="f-btn f-btn-primary">Save Budget</button>
+          <a href="{% url 'accounts:dashboard' %}" class="f-btn f-btn-ghost">Cancel</a>
+        </div>
+
+      </form>
+    </div>
+
   </div>
 </div>
+
 {% endblock %}

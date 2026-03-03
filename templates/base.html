@@ -7,36 +7,174 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-    .alert-error {
-        color: #842029;
-        background-color: #f8d7da;
-        border-color: #f5c2c7;
-    }
-</style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --page-bg:    #111318;
+            --nav-bg:     #1a1d27;
+            --nav-border: rgba(255,255,255,0.06);
+            --text-1:     #e8eaf2;
+            --text-2:     #848aa8;
+            --text-3:     #50566e;
+            --blue:       #5b8dee;
+            --red:        #f0506e;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            background: var(--page-bg) !important;
+            color: var(--text-1);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        /* ── Navbar ── */
+        .app-nav {
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--nav-border);
+            padding: 0 24px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .app-nav-brand {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text-1) !important;
+            text-decoration: none;
+            letter-spacing: -0.2px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .app-nav-brand span { color: var(--blue); }
+
+        /* ── Nav action buttons ── */
+        .app-nav-links {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 13px;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-2);
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            line-height: 1.4;
+        }
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+            color: var(--text-1);
+        }
+
+        /* Only primary action gets color */
+        .nav-btn-solid {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: #fff;
+        }
+        .nav-btn-solid:hover {
+            background: #4a7cde;
+            border-color: #4a7cde;
+            color: #fff;
+            box-shadow: 0 3px 12px rgba(91,141,238,0.3);
+        }
+
+        /* Right side */
+        .app-nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .app-nav-user {
+            color: var(--text-2);
+            font-size: 0.82rem;
+            font-weight: 500;
+        }
+
+        .app-nav-logout {
+            color: var(--text-2);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.15s;
+        }
+        .app-nav-logout:hover {
+            color: var(--red);
+            border-color: rgba(240,80,110,0.3);
+            background: rgba(240,80,110,0.08);
+        }
+
+        /* ── Page body ── */
+        .app-body {
+            padding: 0 28px;
+            max-width: 100%;
+        }
+
+        /* ── Alerts ── */
+        .alert {
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-top: 16px;
+        }
+        .alert-error {
+            color: var(--red);
+            background: rgba(240,80,110,0.1);
+            border: 1px solid rgba(240,80,110,0.2);
+        }
+    </style>
 </head>
 
-<body class="bg-light">
-    
+<body>
+
     {% if user.is_authenticated %}
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'accounts:dashboard' %}">
-                Finance Tracker
-            </a>
-            <div>
-                <span class="text-white me-3">{{ user.username }}</span>
-                <a href="{% url 'accounts:logout' %}">
-                    Logout
-                </a>
-            </div>
+    <nav class="app-nav">
+        <a class="app-nav-brand" href="{% url 'accounts:dashboard' %}">
+            Finance <span>Tracker</span>
+        </a>
+
+        <div class="app-nav-links">
+            <a href="{% url 'accounts:category-add' %}"    class="nav-btn">+ Category</a>
+            <a href="{% url 'accounts:transaction-add' %}" class="nav-btn">+ Transaction</a>
+            <a href="{% url 'accounts:monthly-report' %}"  class="nav-btn">📊 Report</a>
+            <a href="{% url 'accounts:budget-add' %}"      class="nav-btn">+ Budget</a>
+        </div>
+
+        <div class="app-nav-right">
+            <span class="app-nav-user">{{ user.username }}</span>
+            <a href="{% url 'accounts:logout' %}" class="app-nav-logout">Logout</a>
         </div>
     </nav>
     {% endif %}
 
-    <div class="container mt-4">
+    <div class="app-body">
         {% if messages %}
             {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
