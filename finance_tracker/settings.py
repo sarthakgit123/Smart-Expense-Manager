@@ -33,11 +33,9 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '.onrender.com',   
-    '.railway.app',   
-    '.herokuapp.com',  
+    "127.0.0.1",
+    "localhost",
+    ".vercel.app",  
 ]
 
 
@@ -96,8 +94,8 @@ WSGI_APPLICATION = 'finance_tracker.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL"),
+     "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
         ssl_require=True,
     )
@@ -199,7 +197,7 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 CSRF_TRUSTED_ORIGINS = [
-    "https://finance-tracker-0oc7.onrender.com",
+       "https://*.vercel.app",
 ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
