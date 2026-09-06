@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Delete Budget — Smart Expense Manager{% endblock %}
+{% block title %}Delete Category — Smart Expense Manager{% endblock %}
 
 {% block content %}
 
@@ -91,17 +91,17 @@
 <div class="modal-dialog-wrap">
   <div class="modal-card-dark">
     <div class="modal-icon-badge">🗑️</div>
-    <h2 class="modal-heading">Delete Budget</h2>
+    <h2 class="modal-heading">Delete Category</h2>
     <p class="modal-desc">
-      Are you sure you want to delete the budget limit for <strong>"{{ object.category.name }}"</strong> for {{ object.month }}/{{ object.year }}?
-      Your historical transactions will not be affected.
+      Are you sure you want to delete the custom category <strong>"{{ object.name }}"</strong>?
+      Associated transactions will be preserved and moved to uncategorized.
     </p>
 
     <form method="post">
       {% csrf_token %}
       <div class="modal-actions-row">
         <button type="submit" class="btn-danger-confirm">Yes, Delete</button>
-        <a href="{% url 'accounts:dashboard' %}" class="btn-cancel-confirm">Cancel</a>
+        <a href="{% url 'accounts:categories' %}" class="btn-cancel-confirm">Cancel</a>
       </div>
     </form>
   </div>

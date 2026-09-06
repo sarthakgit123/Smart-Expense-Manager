@@ -1,233 +1,213 @@
 {% extends 'base.html' %}
 
-{% block title %}Register{% endblock %}
+{% block title %}Create Account — Smart Expense Manager{% endblock %}
 
 {% block content %}
 
 <style>
-  .auth-wrap {
-    min-height: calc(100vh - 52px);
+  .auth-page-wrap {
+    min-height: calc(100vh - 120px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 32px 16px;
+    padding: 24px 16px;
   }
 
   .auth-card {
-    background: #1a1d27;
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
     width: 100%;
-    max-width: 420px;
+    max-width: 440px;
     overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
   }
 
   .auth-card-header {
-    padding: 26px 32px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 30px 32px 20px;
+    border-bottom: 1px solid var(--border-subtle);
     text-align: center;
   }
 
-  .auth-logo {
+  .auth-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     font-size: 0.85rem;
     font-weight: 700;
-    color: #848aa8;
-    letter-spacing: 0.5px;
-    margin-bottom: 10px;
+    color: var(--text-primary);
+    margin-bottom: 12px;
   }
-  .auth-logo span { color: #5b8dee; }
+
+  .auth-icon-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #6366f1, #4338ca);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: #fff;
+  }
 
   .auth-title {
-    font-size: 1.25rem;
+    font-size: 1.35rem;
     font-weight: 700;
-    color: #e8eaf2;
+    color: var(--text-primary);
     letter-spacing: -0.4px;
-    margin-bottom: 4px;
+    margin: 0;
   }
 
-  .auth-sub {
-    font-size: 0.8rem;
-    color: #50566e;
+  .auth-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 4px 0 0;
   }
 
   .auth-card-body {
-    padding: 26px 32px 30px;
+    padding: 26px 32px 34px;
   }
 
-  /* Alerts */
-  .auth-alert {
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 500;
-    margin-bottom: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  .auth-alert-error   { background: rgba(240,80,110,0.1);  color: #f0506e; border: 1px solid rgba(240,80,110,0.2); }
-  .auth-alert-success { background: rgba(34,199,122,0.1);  color: #22c77a; border: 1px solid rgba(34,199,122,0.2); }
-  .auth-alert-warning { background: rgba(245,166,35,0.1);  color: #f5a623; border: 1px solid rgba(245,166,35,0.2); }
-  .auth-alert-info    { background: rgba(91,141,238,0.1);  color: #5b8dee; border: 1px solid rgba(91,141,238,0.2); }
-
-  .alert-close {
-    background: none;
-    border: none;
-    color: inherit;
-    opacity: 0.6;
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 0;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-  .alert-close:hover { opacity: 1; }
-
-  /* Two-col row */
-  .f-row {
+  .auth-row-2col {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
 
-  .f-group { margin-bottom: 13px; }
+  .auth-field-group {
+    margin-bottom: 15px;
+  }
 
-  .f-input {
+  .auth-input {
     width: 100%;
-    background: #111318 !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    border-radius: 9px !important;
-    color: #e8eaf2 !important;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.86rem;
+    background: var(--bg-canvas) !important;
+    border: 1px solid var(--border-strong) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
     padding: 10px 14px !important;
     outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    box-shadow: none !important;
+    transition: all 0.15s ease;
   }
-  .f-input::placeholder { color: #50566e; }
-  .f-input:focus {
-    border-color: #5b8dee !important;
-    box-shadow: 0 0 0 3px rgba(91,141,238,0.12) !important;
+  .auth-input::placeholder { color: var(--text-muted); }
+  .auth-input:focus {
+    border-color: var(--brand-primary) !important;
+    box-shadow: 0 0 0 3px var(--brand-glow) !important;
   }
 
-  .btn-submit {
+  .auth-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+  }
+
+  .btn-auth-submit {
     width: 100%;
-    padding: 10px;
-    background: #5b8dee;
+    padding: 11px;
+    background: var(--brand-primary);
     color: #fff;
-    border: none;
-    border-radius: 9px;
-    font-family: 'Inter', sans-serif;
+    border: 1px solid var(--brand-primary);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
     font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
     margin-top: 8px;
   }
-  .btn-submit:hover {
-    background: #4a7cde;
-    box-shadow: 0 4px 16px rgba(91,141,238,0.35);
+  .btn-auth-submit:hover {
+    background: var(--brand-primary-hover);
+    box-shadow: 0 4px 16px var(--brand-glow);
   }
 
-  .auth-footer {
+  .auth-card-footer {
     text-align: center;
     margin-top: 20px;
-    font-size: 0.8rem;
-    color: #50566e;
+    font-size: 0.82rem;
+    color: var(--text-muted);
   }
-  .auth-footer a {
-    color: #5b8dee;
+  .auth-card-footer a {
+    color: var(--brand-primary);
     text-decoration: none;
     font-weight: 600;
   }
-  .auth-footer a:hover { text-decoration: underline; }
-
-  /* Password strength hint */
-  .f-hint {
-    font-size: 0.7rem;
-    color: #50566e;
-    margin-top: 5px;
+  .auth-card-footer a:hover {
+    text-decoration: underline;
   }
 </style>
 
-<div class="auth-wrap">
+<div class="auth-page-wrap">
   <div class="auth-card">
 
     <div class="auth-card-header">
-      <div class="auth-logo">Finance <span>Tracker</span></div>
-      <div class="auth-title">Create an account</div>
-      <div class="auth-sub">Start tracking your finances today</div>
+      <div class="auth-brand-badge">
+        <div class="auth-icon-circle">₹</div>
+        <span>Finance Tracker</span>
+      </div>
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Join to start tracking your finances seamlessly</p>
     </div>
 
     <div class="auth-card-body">
-
-      <!-- Messages -->
-      {% if messages %}
-        {% for message in messages %}
-        <div class="auth-alert auth-alert-{{ message.tags }}">
-          <span>{{ message }}</span>
-          <button class="alert-close" onclick="this.parentElement.remove()">✕</button>
-        </div>
-        {% endfor %}
-      {% endif %}
 
       <form method="post">
         {% csrf_token %}
 
         <!-- Username -->
-        <div class="f-group">
-          <input type="text" name="username" class="f-input"
+        <div class="auth-field-group">
+          <input type="text" name="username" class="auth-input"
                  placeholder="Username"
                  value="{{ username|default:'' }}"
                  required autocomplete="username">
         </div>
 
-        <!-- First / Last name -->
-        <div class="f-row">
-          <div class="f-group">
-            <input type="text" name="first_name" class="f-input"
+        <!-- Name 2-col -->
+        <div class="auth-row-2col">
+          <div class="auth-field-group">
+            <input type="text" name="first_name" class="auth-input"
                    placeholder="First Name"
                    value="{{ first_name|default:'' }}" required>
           </div>
-          <div class="f-group">
-            <input type="text" name="last_name" class="f-input"
+          <div class="auth-field-group">
+            <input type="text" name="last_name" class="auth-input"
                    placeholder="Last Name"
                    value="{{ last_name|default:'' }}" required>
           </div>
         </div>
 
         <!-- Email -->
-        <div class="f-group">
-          <input type="email" name="email" class="f-input"
+        <div class="auth-field-group">
+          <input type="email" name="email" class="auth-input"
                  placeholder="Email address"
                  value="{{ email|default:'' }}"
                  required autocomplete="email">
         </div>
 
-        <!-- Passwords -->
-        <div class="f-group">
-          <input type="password" name="password1" class="f-input"
+        <!-- Password -->
+        <div class="auth-field-group">
+          <input type="password" name="password1" class="auth-input"
                  placeholder="Password"
                  required autocomplete="new-password">
         </div>
 
-        <div class="f-group">
-          <input type="password" name="password2" class="f-input"
+        <div class="auth-field-group">
+          <input type="password" name="password2" class="auth-input"
                  placeholder="Confirm Password"
                  required autocomplete="new-password">
-          <div class="f-hint">Use 8+ characters with a mix of letters and numbers</div>
+          <div class="auth-hint">Must be 8+ characters and not too common</div>
         </div>
 
-        <button type="submit" class="btn-submit">Create Account</button>
+        <button type="submit" class="btn-auth-submit">Create Account</button>
       </form>
 
-      <div class="auth-footer">
-        Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a>
+      <div class="auth-card-footer">
+        Already registered? <a href="{% url 'accounts:login' %}">Sign in</a>
       </div>
 
     </div>
+
   </div>
 </div>
 

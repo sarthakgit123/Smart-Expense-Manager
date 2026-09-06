@@ -132,3 +132,78 @@ class Budget(models.Model):
     def is_over_budget(self):
         """Check if spending exceeds budget"""
         return self.get_spent_amount() > self.monthly_limit
+
+    def get_spent_percentage(self):
+        """Calculate percentage of budget spent (capped at 100 for progress bar)"""
+        if not self.monthly_limit or self.monthly_limit <= 0:
+            return 0
+        spent = self.get_spent_amount()
+        return min(int((spent / self.monthly_limit) * 100), 100)
+
+
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
+
+@receiver(post_save, sender=Transaction)
+def transaction_post_save_budget_alert(sender, instance, **kwargs):
+    if instance.transaction_type == Transaction.EXPENSE and instance.category and instance.user and instance.date:
+        if isinstance(instance.date, str):
+            from datetime import datetime
+            try:
+                dt = datetime.strptime(instance.date, '%Y-%m-%d').date()
+                month, year = dt.month, dt.year
+            except Exception:
+                return
+        else:
+            month, year = instance.date.month, instance.date.year
+
+        from accounts.utils import check_and_trigger_budget_alerts
+        check_and_trigger_budget_alerts(
+            user=instance.user,
+            category=instance.category,
+            month=month,
+            year=year
+        )
+
+
+@receiver(post_delete, sender=Transaction)
+def transaction_post_delete_budget_alert(sender, instance, **kwargs):
+    if instance.transaction_type == Transaction.EXPENSE and instance.category and instance.user and instance.date:
+        if isinstance(instance.date, str):
+            from datetime import datetime
+            try:
+                dt = datetime.strptime(instance.date, '%Y-%m-%d').date()
+                month, year = dt.month, dt.year
+            except Exception:
+                return
+        else:
+            month, year = instance.date.month, instance.date.year
+
+        from accounts.utils import check_and_trigger_budget_alerts
+        check_and_trigger_budget_alerts(
+            user=instance.user,
+            category=instance.category,
+            month=month,
+            year=year
+        )
+
+
+
+@receiver(post_save, sender=Budget)
+def budget_post_save_check(sender, instance, **kwargs):
+    # Only trigger if alert_sent is not the only field updated
+    update_fields = kwargs.get('update_fields')
+    if update_fields and 'alert_sent' in update_fields and len(update_fields) == 1:
+        return
+
+    if instance.user and instance.category:
+        from accounts.utils import check_and_trigger_budget_alerts
+        check_and_trigger_budget_alerts(
+            user=instance.user,
+            category=instance.category,
+            month=instance.month,
+            year=instance.year
+        )
+
+

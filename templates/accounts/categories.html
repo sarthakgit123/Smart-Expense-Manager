@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Categories — Smart Expense Manager{% endblock %}
+
+{% block content %}
+
+<style>
+  .categories-page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+  }
+
+  .cat-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .cat-title-wrap h1 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+    margin: 0;
+  }
+
+  .cat-title-wrap p {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    margin: 4px 0 0;
+  }
+
+  .btn-add-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--brand-primary);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 0.84rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid var(--brand-primary);
+    transition: all 0.15s ease;
+  }
+  .btn-add-category:hover {
+    background: var(--brand-primary-hover);
+    box-shadow: 0 2px 10px var(--brand-glow);
+    color: #fff;
+  }
+
+  /* ── Filter Tabs ── */
+  .filter-tabs-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .tab-btn:hover {
+    background: var(--bg-surface-elevated);
+    color: var(--text-primary);
+  }
+  .tab-btn.active {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.3);
+    color: var(--brand-primary);
+    font-weight: 600;
+  }
+
+  /* ── Table Card ── */
+  .data-table-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .data-table thead th {
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .data-table tbody tr {
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background-color 0.12s ease;
+  }
+  .data-table tbody tr:last-child { border-bottom: none; }
+  .data-table tbody tr:hover { background: var(--bg-surface-elevated); }
+  .data-table tbody td {
+    padding: 13px 20px;
+    color: var(--text-secondary);
+    font-size: 0.86rem;
+    vertical-align: middle;
+  }
+
+  .pill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.73rem;
+    font-weight: 600;
+  }
+  .pill-income { background: var(--income-dim); color: var(--income); }
+  .pill-expense { background: var(--expense-dim); color: var(--expense); }
+  .pill-default { background: rgba(99, 102, 241, 0.12); color: var(--brand-primary); }
+  .pill-custom { background: rgba(245, 158, 11, 0.12); color: var(--budget); }
+
+  .table-action-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+  }
+
+  .btn-tbl-edit {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--budget);
+    border-color: rgba(245, 158, 11, 0.2);
+  }
+  .btn-tbl-edit:hover { background: rgba(245, 158, 11, 0.2); color: var(--budget); }
+
+  .btn-tbl-delete {
+    background: var(--expense-dim);
+    color: var(--expense);
+    border-color: rgba(244, 63, 94, 0.2);
+    margin-left: 4px;
+  }
+  .btn-tbl-delete:hover { background: rgba(244, 63, 94, 0.22); color: var(--expense); }
+</style>
+
+<div class="categories-page">
+
+  <!-- Header -->
+  <header class="cat-page-header">
+    <div class="cat-title-wrap">
+      <h1>Categories</h1>
+      <p>Organize transactions with default and custom categories</p>
+    </div>
+    <a href="{% url 'accounts:category-add' %}" class="btn-add-category">
+      + New Category
+    </a>
+  </header>
+
+  <!-- Filter Tabs -->
+  <div class="filter-tabs-bar">
+    <button class="tab-btn active" onclick="filterCategories('all', this)">All Categories</button>
+    <button class="tab-btn" onclick="filterCategories('EX', this)">Expenses Only</button>
+    <button class="tab-btn" onclick="filterCategories('IN', this)">Income Only</button>
+    <button class="tab-btn" onclick="filterCategories('custom', this)">Custom (My Categories)</button>
+    <button class="tab-btn" onclick="filterCategories('default', this)">System Defaults</button>
+  </div>
+
+  <!-- Categories Table -->
+  <div class="data-table-card">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Category Name</th>
+            <th>Type</th>
+            <th>Origin</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="categoryTableBody">
+          {% for cat in categories %}
+          <tr class="cat-row" data-type="{{ cat.category_type }}" data-origin="{% if cat.is_default %}default{% else %}custom{% endif %}">
+            <td style="font-weight: 600; color: var(--text-primary);">
+              {{ cat.name }}
+            </td>
+            <td>
+              {% if cat.category_type == "IN" %}
+                <span class="pill-badge pill-income">Income</span>
+              {% else %}
+                <span class="pill-badge pill-expense">Expense</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if cat.is_default %}
+                <span class="pill-badge pill-default">System Default</span>
+              {% else %}
+                <span class="pill-badge pill-custom">Custom Category</span>
+              {% endif %}
+            </td>
+            <td style="text-align: right;">
+              {% if not cat.is_default %}
+                <a href="{% url 'accounts:category-edit' cat.id %}" class="table-action-btn btn-tbl-edit">Edit</a>
+                <a href="{% url 'accounts:category-delete' cat.id %}" class="table-action-btn btn-tbl-delete">Delete</a>
+              {% else %}
+                <span style="font-size: 0.74rem; color: var(--text-muted); opacity: 0.6;">System Locked</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" style="text-align: center; padding: 36px; color: var(--text-muted);">
+              No categories found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function filterCategories(filter, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const rows = document.querySelectorAll('.cat-row');
+  rows.forEach(row => {
+    const type = row.getAttribute('data-type');
+    const origin = row.getAttribute('data-origin');
+
+    if (filter === 'all') {
+      row.style.display = '';
+    } else if (filter === 'IN' || filter === 'EX') {
+      row.style.display = (type === filter) ? '' : 'none';
+    } else if (filter === 'custom' || filter === 'default') {
+      row.style.display = (origin === filter) ? '' : 'none';
+    }
+  });
+}
+</script>
+
+{% endblock %}

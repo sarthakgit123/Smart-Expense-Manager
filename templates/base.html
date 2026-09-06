@@ -3,148 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Finance Tracker{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>{% block title %}Smart Expense Manager{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS (Reset & Grid) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
+    <style>
         :root {
-            --page-bg:    #111318;
-            --nav-bg:     #1a1d27;
-            --nav-border: rgba(255,255,255,0.06);
-            --text-1:     #e8eaf2;
-            --text-2:     #848aa8;
-            --text-3:     #50566e;
-            --blue:       #5b8dee;
-            --red:        #f0506e;
+            --bg-canvas: #090a0f;
+            --bg-surface: #11131a;
+            --bg-surface-elevated: #171a24;
+            --bg-surface-hover: #1e2230;
+            --border-subtle: rgba(255, 255, 255, 0.07);
+            --border-strong: rgba(255, 255, 255, 0.14);
+            --border-focus: #6366f1;
+            
+            --brand-primary: #6366f1;
+            --brand-primary-hover: #4f46e5;
+            --brand-glow: rgba(99, 102, 241, 0.25);
+            
+            --income: #10b981;
+            --income-dim: rgba(16, 185, 129, 0.12);
+            --expense: #f43f5e;
+            --expense-dim: rgba(244, 63, 94, 0.12);
+            --budget: #f59e0b;
+            --budget-dim: rgba(245, 158, 11, 0.12);
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
         }
 
-        *, *::before, *::after { box-sizing: border-box; }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
 
         html, body {
-            background: var(--page-bg) !important;
-            color: var(--text-1);
-            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-canvas) !important;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
             margin: 0;
+            padding: 0;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ── Custom Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-canvas);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
         }
 
         /* ── Navbar ── */
-        .app-nav {
-            background: var(--nav-bg);
-            border-bottom: 1px solid var(--nav-border);
-            padding: 0 24px;
-            height: 52px;
+        .app-navbar {
+            background: rgba(17, 19, 26, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0 28px;
+            height: 60px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 1000;
         }
 
-        .app-nav-brand {
-            font-size: 0.92rem;
-            font-weight: 700;
-            color: var(--text-1) !important;
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             text-decoration: none;
-            letter-spacing: -0.2px;
-            white-space: nowrap;
-            flex-shrink: 0;
+            color: var(--text-primary) !important;
+            font-size: 0.98rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
         }
-        .app-nav-brand span { color: var(--blue); }
 
-        /* ── Nav action buttons ── */
-        .app-nav-links {
+        .brand-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #6366f1, #4338ca);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 10px var(--brand-glow);
+        }
+
+        .brand-logo span {
+            color: var(--brand-primary);
+        }
+
+        .nav-links-group {
             display: flex;
             align-items: center;
             gap: 6px;
-            flex: 1;
-            justify-content: center;
         }
 
-        .nav-btn {
+        .nav-action-btn {
             display: inline-flex;
             align-items: center;
-            padding: 5px 13px;
-            border-radius: 7px;
-            font-size: 0.78rem;
-            font-weight: 600;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 500;
             text-decoration: none;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(255,255,255,0.04);
-            color: var(--text-2);
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            background: transparent;
             transition: all 0.15s ease;
-            white-space: nowrap;
-            line-height: 1.4;
-        }
-        .nav-btn:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.15);
-            color: var(--text-1);
         }
 
-        /* Only primary action gets color */
-        .nav-btn-solid {
-            background: var(--blue);
-            border-color: var(--blue);
-            color: #fff;
-        }
-        .nav-btn-solid:hover {
-            background: #4a7cde;
-            border-color: #4a7cde;
-            color: #fff;
-            box-shadow: 0 3px 12px rgba(91,141,238,0.3);
+        .nav-action-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-surface-elevated);
+            border-color: var(--border-subtle);
         }
 
-        /* Right side */
-        .app-nav-right {
+        .nav-action-btn.active {
+            color: var(--brand-primary);
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.25);
+            font-weight: 600;
+        }
+
+        .nav-action-btn-primary {
+            background: var(--brand-primary);
+            color: #ffffff !important;
+            border-color: var(--brand-primary);
+            font-weight: 600;
+        }
+
+        .nav-action-btn-primary:hover {
+            background: var(--brand-primary-hover);
+            border-color: var(--brand-primary-hover);
+            box-shadow: 0 2px 12px var(--brand-glow);
+        }
+
+        .nav-user-area {
             display: flex;
             align-items: center;
-            gap: 12px;
-            flex-shrink: 0;
+            gap: 14px;
         }
 
-        .app-nav-user {
-            color: var(--text-2);
-            font-size: 0.82rem;
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.84rem;
+            color: var(--text-secondary);
             font-weight: 500;
         }
 
-        .app-nav-logout {
-            color: var(--text-2);
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-strong);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--brand-primary);
+            text-transform: uppercase;
+        }
+
+        .nav-logout-btn {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
             text-decoration: none;
-            font-weight: 600;
-            font-size: 0.78rem;
-            padding: 4px 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.08);
-            transition: all 0.15s;
-        }
-        .app-nav-logout:hover {
-            color: var(--red);
-            border-color: rgba(240,80,110,0.3);
-            background: rgba(240,80,110,0.08);
+            padding: 5px 11px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.15s ease;
         }
 
-        /* ── Page body ── */
-        .app-body {
-            padding: 0 28px;
-            max-width: 100%;
+        .nav-logout-btn:hover {
+            color: var(--expense);
+            border-color: rgba(244, 63, 94, 0.3);
+            background: var(--expense-dim);
         }
 
-        /* ── Alerts ── */
-        .alert {
-            border-radius: 8px;
-            font-size: 0.85rem;
-            margin-top: 16px;
+        /* ── Container Layout ── */
+        .app-main-container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 24px 24px 64px;
         }
-        .alert-error {
-            color: var(--red);
-            background: rgba(240,80,110,0.1);
-            border: 1px solid rgba(240,80,110,0.2);
+
+        /* ── Global Cards ── */
+        .dark-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .dark-card:hover {
+            border-color: var(--border-strong);
+        }
+
+        /* ── Modern Alerts ── */
+        .app-alert {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            border-radius: var(--radius-md);
+            font-size: 0.86rem;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .app-alert-success { background: var(--income-dim); color: var(--income); border-color: rgba(16, 185, 129, 0.25); }
+        .app-alert-error, .app-alert-danger { background: var(--expense-dim); color: var(--expense); border-color: rgba(244, 63, 94, 0.25); }
+        .app-alert-warning { background: var(--budget-dim); color: var(--budget); border-color: rgba(245, 158, 11, 0.25); }
+        .app-alert-info { background: rgba(99, 102, 241, 0.12); color: var(--brand-primary); border-color: rgba(99, 102, 241, 0.25); }
+
+        .alert-dismiss-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            opacity: 0.6;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0 4px;
+            line-height: 1;
+        }
+        .alert-dismiss-btn:hover { opacity: 1; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Responsive Rules ── */
+        @media (max-width: 860px) {
+            .app-navbar {
+                padding: 0 16px;
+                height: auto;
+                min-height: 56px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .nav-links-group {
+                order: 3;
+                width: 100%;
+                overflow-x: auto;
+                padding-bottom: 8px;
+                justify-content: flex-start;
+            }
+            .app-main-container {
+                padding: 16px 14px 48px;
+            }
         }
     </style>
 </head>
@@ -152,38 +300,53 @@
 <body>
 
     {% if user.is_authenticated %}
-    <nav class="app-nav">
-        <a class="app-nav-brand" href="{% url 'accounts:dashboard' %}">
-            Finance <span>Tracker</span>
+    <header class="app-navbar">
+        <a class="brand-logo" href="{% url 'accounts:dashboard' %}">
+            <div class="brand-icon">₹</div>
+            <div>Finance <span>Tracker</span></div>
         </a>
 
-        <div class="app-nav-links">
-            <a href="{% url 'accounts:category-add' %}"    class="nav-btn">+ Category</a>
-            <a href="{% url 'accounts:transaction-add' %}" class="nav-btn">+ Transaction</a>
-            <a href="{% url 'accounts:monthly-report' %}"  class="nav-btn">📊 Report</a>
-            <a href="{% url 'accounts:budget-add' %}"      class="nav-btn">+ Budget</a>
-        </div>
+        <nav class="nav-links-group">
+            <a href="{% url 'accounts:dashboard' %}" class="nav-action-btn {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                📊 Dashboard
+            </a>
+            <a href="{% url 'accounts:categories' %}" class="nav-action-btn {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
+                🏷️ Categories
+            </a>
+            <a href="{% url 'accounts:monthly-report' %}" class="nav-action-btn {% if 'report' in request.resolver_match.url_name %}active{% endif %}">
+                📈 Reports
+            </a>
+            <a href="{% url 'accounts:budget-add' %}" class="nav-action-btn {% if 'budget' in request.resolver_match.url_name %}active{% endif %}">
+                💰 Budget
+            </a>
+            <a href="{% url 'accounts:transaction-add' %}" class="nav-action-btn nav-action-btn-primary">
+                + Transaction
+            </a>
+        </nav>
 
-        <div class="app-nav-right">
-            <span class="app-nav-user">{{ user.username }}</span>
-            <a href="{% url 'accounts:logout' %}" class="app-nav-logout">Logout</a>
+        <div class="nav-user-area">
+            <div class="user-badge" title="{{ user.email }}">
+                <div class="user-avatar">{{ user.username|slice:":1" }}</div>
+                <span>{{ user.username }}</span>
+            </div>
+            <a href="{% url 'accounts:logout' %}" class="nav-logout-btn">Logout</a>
         </div>
-    </nav>
+    </header>
     {% endif %}
 
-    <div class="app-body">
+    <main class="app-main-container">
         {% if messages %}
             {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="app-alert app-alert-{{ message.tags }}">
+                <span>{{ message }}</span>
+                <button type="button" class="alert-dismiss-btn" onclick="this.parentElement.remove()">✕</button>
             </div>
             {% endfor %}
         {% endif %}
 
         {% block content %}{% endblock %}
-    </div>
+    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

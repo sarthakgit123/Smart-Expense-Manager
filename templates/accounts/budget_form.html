@@ -1,182 +1,188 @@
 {% extends "base.html" %}
-{% block title %}Add Budget{% endblock %}
+
+{% block title %}{% if object %}Edit Budget{% else %}Set Budget{% endif %} — Smart Expense Manager{% endblock %}
 
 {% block content %}
 
 <style>
-  .form-wrap {
-    min-height: calc(100vh - 52px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 16px;
+  .form-page-container {
+    max-width: 480px;
+    margin: 36px auto;
   }
 
   .form-card {
-    background: #1a1d27;
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 16px;
-    width: 100%;
-    max-width: 420px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
     overflow: hidden;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
   }
 
   .form-card-header {
-    padding: 22px 28px 18px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
-    gap: 10px;
-  }
-
-  .form-card-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #e8eaf2;
-    letter-spacing: -0.2px;
-  }
-
-  .form-card-sub {
-    font-size: 0.78rem;
-    color: #50566e;
-    margin-top: 2px;
-  }
-
-  .form-card-body {
-    padding: 24px 28px 28px;
-  }
-
-  /* Two-col grid for month/year */
-  .f-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
 
-  .f-group { margin-bottom: 16px; }
-
-  .f-label {
-    display: block;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.9px;
-    color: #50566e;
-    margin-bottom: 7px;
-  }
-
-  /* All Django-rendered inputs */
-  .form-card input,
-  .form-card select,
-  .form-card textarea {
-    width: 100%;
-    background: #111318 !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    border-radius: 9px !important;
-    color: #e8eaf2 !important;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.86rem;
-    padding: 10px 14px !important;
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    box-shadow: none !important;
-    -webkit-appearance: none;
-  }
-
-  .form-card input::placeholder { color: #50566e; }
-
-  .form-card input:focus,
-  .form-card select:focus {
-    border-color: #5b8dee !important;
-    box-shadow: 0 0 0 3px rgba(91,141,238,0.12) !important;
-  }
-
-  /* Select arrow */
-  .form-card select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23848aa8' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: right 12px center !important;
-    padding-right: 32px !important;
-    cursor: pointer;
-  }
-
-  .form-card select option { background: #1a1d27; color: #e8eaf2; }
-
-  /* Divider */
-  .f-divider {
-    height: 1px;
-    background: rgba(255,255,255,0.05);
-    margin: 20px 0;
-  }
-
-  /* Buttons */
-  .f-actions { display: flex; gap: 10px; }
-
-  .f-btn {
-    display: inline-flex;
+  .form-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--budget);
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 22px;
-    border-radius: 9px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-decoration: none;
-    border: 1px solid transparent;
-    cursor: pointer;
+    font-size: 1.1rem;
+  }
+
+  .form-header-title h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.2px;
+  }
+
+  .form-header-title p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 2px 0 0;
+  }
+
+  .form-card-body {
+    padding: 26px 28px 30px;
+  }
+
+  .input-field-group {
+    margin-bottom: 20px;
+  }
+
+  .input-label {
+    display: block;
+    font-size: 0.73rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .form-control-dark {
+    width: 100%;
+    background: var(--bg-canvas) !important;
+    border: 1px solid var(--border-strong) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    padding: 10px 14px !important;
+    outline: none;
     transition: all 0.15s ease;
   }
 
-  .f-btn-primary {
-    background: #f5a623;
-    color: #111318;
-    border-color: #f5a623;
-    flex: 1;
-  }
-  .f-btn-primary:hover {
-    background: #e09510;
-    color: #111318;
-    box-shadow: 0 4px 14px rgba(245,166,35,0.35);
+  .form-control-dark:focus {
+    border-color: var(--brand-primary) !important;
+    box-shadow: 0 0 0 3px var(--brand-glow) !important;
   }
 
-  .f-btn-ghost {
-    background: transparent;
-    color: #848aa8;
-    border-color: rgba(255,255,255,0.08);
-  }
-  .f-btn-ghost:hover {
-    color: #e8eaf2;
-    border-color: rgba(255,255,255,0.16);
-    background: rgba(255,255,255,0.04);
+  select.form-control-dark {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 14px center !important;
+    padding-right: 36px !important;
+    -webkit-appearance: none;
   }
 
-  /* Limit input prefix */
-  .input-prefix-wrap {
+  select.form-control-dark option {
+    background: #11131a;
+    color: #f8fafc;
+  }
+
+  .amount-input-wrap {
     position: relative;
   }
-  .input-prefix {
+  .amount-prefix {
     position: absolute;
-    left: 13px;
+    left: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #50566e;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--text-muted);
     pointer-events: none;
   }
-  .input-prefix-wrap input {
-    padding-left: 28px !important;
+  .amount-input-wrap input {
+    padding-left: 32px !important;
+    font-family: var(--font-mono) !important;
+    font-weight: 500;
+  }
+
+  .two-col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .field-error-msg {
+    color: var(--expense);
+    font-size: 0.75rem;
+    margin-top: 6px;
+  }
+
+  .form-btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .btn-submit-budget {
+    flex: 1;
+    background: var(--budget);
+    color: #0c0d12;
+    border: 1px solid var(--budget);
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-submit-budget:hover {
+    background: #d97706;
+    border-color: #d97706;
+    color: #0c0d12;
+    box-shadow: 0 4px 14px var(--budget-dim);
+  }
+
+  .btn-cancel-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 0.86rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .btn-cancel-ghost:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-elevated);
   }
 </style>
 
-<div class="form-wrap">
+<div class="form-page-container">
   <div class="form-card">
 
     <div class="form-card-header">
-      <span style="font-size:1.2rem;">💰</span>
-      <div>
-        <div class="form-card-title">Set Monthly Budget</div>
-        <div class="form-card-sub">Define a spending limit per category</div>
+      <div class="form-header-icon">💰</div>
+      <div class="form-header-title">
+        <h2>{% if object %}Edit Budget{% else %}Set Category Budget{% endif %}</h2>
+        <p>Define spending limits and get automated alerts</p>
       </div>
     </div>
 
@@ -184,40 +190,57 @@
       <form method="post">
         {% csrf_token %}
 
-        <!-- Category -->
-        <div class="f-group">
-          <label class="f-label">Category</label>
+        {% if form.non_field_errors %}
+          <div class="app-alert app-alert-error mb-3">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <!-- Expense Category -->
+        <div class="input-field-group">
+          <label class="input-label">Expense Category</label>
           {{ form.category }}
+          {% if form.category.errors %}
+            <div class="field-error-msg">{{ form.category.errors|striptags }}</div>
+          {% endif %}
         </div>
 
         <!-- Monthly Limit -->
-        <div class="f-group">
-          <label class="f-label">Monthly Limit</label>
-          <div class="input-prefix-wrap">
-            <span class="input-prefix">₹</span>
+        <div class="input-field-group">
+          <label class="input-label">Monthly Spending Limit (INR)</label>
+          <div class="amount-input-wrap">
+            <span class="amount-prefix">₹</span>
             {{ form.monthly_limit }}
           </div>
+          {% if form.monthly_limit.errors %}
+            <div class="field-error-msg">{{ form.monthly_limit.errors|striptags }}</div>
+          {% endif %}
         </div>
 
-        <div class="f-divider"></div>
-
-        <!-- Month + Year side by side -->
-        <div class="f-row">
-          <div class="f-group">
-            <label class="f-label">Month</label>
+        <!-- Month & Year -->
+        <div class="two-col-grid">
+          <div class="input-field-group">
+            <label class="input-label">Month (1-12)</label>
             {{ form.month }}
+            {% if form.month.errors %}
+              <div class="field-error-msg">{{ form.month.errors|striptags }}</div>
+            {% endif %}
           </div>
-          <div class="f-group">
-            <label class="f-label">Year</label>
+
+          <div class="input-field-group">
+            <label class="input-label">Year</label>
             {{ form.year }}
+            {% if form.year.errors %}
+              <div class="field-error-msg">{{ form.year.errors|striptags }}</div>
+            {% endif %}
           </div>
         </div>
 
-        <div class="f-divider"></div>
-
-        <div class="f-actions">
-          <button type="submit" class="f-btn f-btn-primary">Save Budget</button>
-          <a href="{% url 'accounts:dashboard' %}" class="f-btn f-btn-ghost">Cancel</a>
+        <div class="form-btn-group">
+          <button type="submit" class="btn-submit-budget">
+            {% if object %}Save Changes{% else %}Create Budget{% endif %}
+          </button>
+          <a href="{% url 'accounts:dashboard' %}" class="btn-cancel-ghost">Cancel</a>
         </div>
 
       </form>
@@ -225,5 +248,22 @@
 
   </div>
 </div>
+
+<script>
+  document.querySelectorAll('.form-card input, .form-card select').forEach(el => {
+    el.classList.add('form-control-dark');
+  });
+
+  // Default month and year if empty
+  const today = new Date();
+  const monthInput = document.querySelector('input[name="month"]');
+  const yearInput = document.querySelector('input[name="year"]');
+  if (monthInput && !monthInput.value) {
+    monthInput.value = today.getMonth() + 1;
+  }
+  if (yearInput && !yearInput.value) {
+    yearInput.value = today.getFullYear();
+  }
+</script>
 
 {% endblock %}

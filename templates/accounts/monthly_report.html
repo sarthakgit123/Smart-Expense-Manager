@@ -1,294 +1,370 @@
 {% extends "base.html" %}
 
-{% block title %}Monthly Report{% endblock %}
+{% block title %}Monthly Report — Smart Expense Manager{% endblock %}
 
 {% block content %}
 
 <style>
-  .report-wrap {
-    padding-top: 28px;
-    padding-bottom: 48px;
+  .report-page {
+    padding-bottom: 32px;
   }
 
+  /* ── Header & Filter Bar ── */
   .report-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 24px;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 16px;
   }
 
-  .report-title {
-    font-size: 1.2rem;
+  .report-title-wrap h1 {
+    font-size: 1.45rem;
     font-weight: 700;
-    color: #e8eaf2;
-    letter-spacing: -0.3px;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+    margin: 0;
   }
 
-  /* ── Filter bar ── */
-  .filter-card {
-    background: #1a1d27;
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 12px;
-    padding: 18px 22px;
+  .report-title-wrap p {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    margin: 4px 0 0;
+  }
+
+  .filter-form-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
     display: flex;
-    align-items: flex-end;
-    gap: 14px;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-  }
-
-  .filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .filter-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.9px;
-    color: #50566e;
-  }
-
-  .filter-input {
-    background: #111318 !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    border-radius: 8px !important;
-    color: #e8eaf2 !important;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.85rem;
-    padding: 7px 12px !important;
-    outline: none;
-    width: 110px;
-    transition: border-color 0.15s;
-  }
-  .filter-input:focus {
-    border-color: #5b8dee !important;
-    box-shadow: 0 0 0 3px rgba(91,141,238,0.12) !important;
-  }
-
-  .f-btn {
-    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+
+  .filter-inputs-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .filter-select {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.84rem;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    min-width: 130px;
+    transition: all 0.15s ease;
+  }
+  .filter-select:focus {
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 2px var(--brand-glow);
+  }
+
+  .btn-filter-submit {
+    background: var(--brand-primary);
+    color: #fff;
+    border: 1px solid var(--brand-primary);
     padding: 8px 18px;
-    border-radius: 8px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.82rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.84rem;
     font-weight: 600;
-    text-decoration: none;
-    border: 1px solid transparent;
     cursor: pointer;
     transition: all 0.15s ease;
-    white-space: nowrap;
   }
-  .f-btn-primary { background: #5b8dee; color: #fff; border-color: #5b8dee; }
-  .f-btn-primary:hover { background: #4a7cde; color: #fff; box-shadow: 0 4px 12px rgba(91,141,238,0.3); }
-  .f-btn-ghost { background: rgba(34,199,122,0.1); color: #22c77a; border-color: rgba(34,199,122,0.2); }
-  .f-btn-ghost:hover { background: rgba(34,199,122,0.18); color: #22c77a; }
+  .btn-filter-submit:hover {
+    background: var(--brand-primary-hover);
+    box-shadow: 0 2px 10px var(--brand-glow);
+  }
 
-  /* ── Stat Cards ── */
-  .stat-row {
+  .btn-excel-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--income-dim);
+    color: var(--income);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 0.84rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .btn-excel-export:hover {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--income);
+  }
+
+  /* ── Metric Cards ── */
+  .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(3,1fr);
-    gap: 14px;
-    margin-bottom: 24px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
   }
-  @media(max-width:640px){ .stat-row{ grid-template-columns:1fr; } }
+  @media (max-width: 768px) { .metrics-grid { grid-template-columns: 1fr; } }
 
-  .stat-card {
-    background: #1a1d27;
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 12px;
-    padding: 18px 22px;
+  .metric-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
     position: relative;
     overflow: hidden;
-    transition: transform 0.18s;
   }
-  .stat-card:hover { transform: translateY(-2px); }
-  .stat-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:2px 2px 0 0; }
-  .sc-green::after { background: #22c77a; }
-  .sc-red::after   { background: #f0506e; }
-  .sc-blue::after  { background: #5b8dee; }
-  .stat-card::before { content:''; position:absolute; top:-40px; right:-40px; width:100px; height:100px; border-radius:50%; opacity:0.07; filter:blur(24px); pointer-events:none; }
-  .sc-green::before { background: #22c77a; }
-  .sc-red::before   { background: #f0506e; }
-  .sc-blue::before  { background: #5b8dee; }
-
-  .stat-tag { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#50566e; margin-bottom:6px; }
-  .stat-num { font-family:'JetBrains Mono', monospace; font-size:1.5rem; font-weight:500; letter-spacing:-0.5px; }
-  .sc-green .stat-num { color:#22c77a; }
-  .sc-red   .stat-num { color:#f0506e; }
-  .sc-blue  .stat-num { color:#5b8dee; }
-
-  /* ── Data Cards ── */
-  .d-card {
-    background: #1a1d27;
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 20px;
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
   }
+  .card-income::before { background: var(--income); }
+  .card-expense::before { background: var(--expense); }
+  .card-savings::before { background: var(--brand-primary); }
 
-  .d-card-head {
-    padding: 14px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    font-size: 0.88rem;
+  .metric-label {
+    font-size: 0.72rem;
     font-weight: 600;
-    color: #e8eaf2;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
   }
 
-  .d-card table { width:100%; border-collapse:collapse; }
+  .metric-value {
+    font-family: var(--font-mono);
+    font-size: 1.65rem;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+  .card-income .metric-value { color: var(--income); }
+  .card-expense .metric-value { color: var(--expense); }
+  .card-savings .metric-value { color: var(--text-primary); }
 
-  .d-card thead th {
-    padding: 9px 18px;
-    background: rgba(255,255,255,0.025);
-    color: #50566e;
+  /* ── Chart & Content Grid ── */
+  .report-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 22px;
+  }
+  @media (max-width: 992px) { .report-content-grid { grid-template-columns: 1fr; } }
+
+  .data-table-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .card-title-bar {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .data-table thead th {
+    padding: 11px 18px;
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-muted);
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.9px;
+    letter-spacing: 0.8px;
     text-align: left;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid var(--border-subtle);
   }
+  .data-table tbody tr {
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background-color 0.12s ease;
+  }
+  .data-table tbody tr:last-child { border-bottom: none; }
+  .data-table tbody tr:hover { background: var(--bg-surface-elevated); }
+  .data-table tbody td {
+    padding: 12px 18px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    vertical-align: middle;
+  }
+  .mono-val { font-family: var(--font-mono); font-weight: 500; }
 
-  .d-card tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.12s; }
-  .d-card tbody tr:last-child { border-bottom: none; }
-  .d-card tbody tr:hover { background: #21253a; }
-  .d-card tbody td { padding: 11px 18px; color: #848aa8; font-size: 0.84rem; vertical-align: middle; }
-  .d-card tbody td:first-child { color: #e8eaf2; font-weight: 500; }
+  .pill-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .pill-income { background: var(--income-dim); color: var(--income); }
+  .pill-expense { background: var(--expense-dim); color: var(--expense); }
 
-  .empty-state td { text-align:center; padding:36px !important; color:#50566e; font-size:0.82rem; }
-
-  .pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.74rem; font-weight:600; }
-  .pill-green { background:rgba(34,199,122,0.12); color:#22c77a; }
-  .pill-red   { background:rgba(240,80,110,0.12); color:#f0506e; }
-  .mono { font-family:'JetBrains Mono',monospace; font-size:0.82rem; font-weight:500; }
-
-  /* ── Pie Chart ── */
   .chart-card {
-    background: #1a1d27;
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 12px;
-    padding: 22px 24px;
-    margin-bottom: 40px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
   }
-  .chart-card-title { font-size:0.88rem; font-weight:700; color:#e8eaf2; margin-bottom:20px; }
-  #expenseCategoryChart { max-height: 300px; }
+  .chart-canvas-wrap {
+    position: relative;
+    height: 260px;
+    margin-top: 10px;
+  }
 </style>
 
-<div class="report-wrap">
+<div class="report-page">
 
   <!-- Header -->
-  <div class="report-header">
-    <div class="report-title">📊 Monthly Report</div>
-  </div>
-
-  <!-- Filter Bar -->
-  <form method="get">
-    <div class="filter-card">
-      <div class="filter-group">
-        <label class="filter-label">Month</label>
-        <input type="number" name="month" class="filter-input"
-               min="1" max="12" value="{{ month }}">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label">Year</label>
-        <input type="number" name="year" class="filter-input" value="{{ year }}">
-      </div>
-      <button type="submit" class="f-btn f-btn-primary">Generate Report</button>
-      <a href="{% url 'accounts:monthly-report-excel' %}?month={{ month }}&year={{ year }}"
-         class="f-btn f-btn-ghost">⬇ Download Excel</a>
+  <header class="report-header">
+    <div class="report-title-wrap">
+      <h1>Monthly Financial Report</h1>
+      <p>Detailed performance breakdown and category allocation</p>
     </div>
+  </header>
+
+  <!-- Filter Controls -->
+  <form method="get" class="filter-form-card">
+    <div class="filter-inputs-group">
+      <select name="month" class="filter-select">
+        {% for m_num, m_name in months_list %}
+          <option value="{{ m_num }}" {% if m_num == month %}selected{% endif %}>{{ m_name }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="year" class="filter-select" style="min-width: 100px;">
+        {% for y in available_years %}
+          <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn-filter-submit">Apply Filter</button>
+    </div>
+
+    <a href="{% url 'accounts:monthly-report-excel' %}?month={{ month }}&year={{ year }}" class="btn-excel-export">
+      <span>⬇</span> Download Excel (.xlsx)
+    </a>
   </form>
 
-  <!-- Stat Cards -->
-  <div class="stat-row">
-    <div class="stat-card sc-green">
-      <div class="stat-tag">Total Income</div>
-      <div class="stat-num">₹ {{ income }}</div>
+  <!-- Summary Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card card-income">
+      <div class="metric-label">Month's Income</div>
+      <div class="metric-value">₹ {{ income|floatformat:2 }}</div>
     </div>
-    <div class="stat-card sc-red">
-      <div class="stat-tag">Total Expense</div>
-      <div class="stat-num">₹ {{ expense }}</div>
+    <div class="metric-card card-expense">
+      <div class="metric-label">Month's Expenses</div>
+      <div class="metric-value">₹ {{ expense|floatformat:2 }}</div>
     </div>
-    <div class="stat-card sc-blue">
-      <div class="stat-tag">Savings</div>
-      <div class="stat-num">₹ {{ savings }}</div>
-    </div>
-  </div>
-
-  <!-- Transactions Table -->
-  <div class="d-card">
-    <div class="d-card-head">🗒 Transactions</div>
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Category</th>
-            <th>Type</th>
-            <th>Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for t in transactions %}
-          <tr>
-            <td>{{ t.date }}</td>
-            <td>{{ t.category.name|default:"—" }}</td>
-            <td>
-              {% if t.transaction_type == "IN" %}
-                <span class="pill pill-green">Income</span>
-              {% else %}
-                <span class="pill pill-red">Expense</span>
-              {% endif %}
-            </td>
-            <td class="mono">₹ {{ t.amount }}</td>
-          </tr>
-          {% empty %}
-          <tr class="empty-state">
-            <td colspan="4">No transactions for this month</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="metric-card card-savings">
+      <div class="metric-label">Net Saved</div>
+      <div class="metric-value">₹ {{ savings|floatformat:2 }}</div>
     </div>
   </div>
 
-  <!-- Pie Chart -->
-  <div class="chart-card">
-    <div class="chart-card-title">🍩 Expense Distribution by Category</div>
-    <canvas id="expenseCategoryChart"></canvas>
+  <!-- Content Grid -->
+  <div class="report-content-grid">
+    <!-- Transactions Table -->
+    <div class="data-table-card">
+      <div class="card-title-bar">
+        <span>Transactions for Selected Period</span>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transactions %}
+            <tr>
+              <td class="mono-val">{{ t.date|date:"Y-m-d" }}</td>
+              <td>{{ t.category.name|default:"Uncategorized" }}</td>
+              <td>
+                {% if t.transaction_type == "IN" %}
+                  <span class="pill-badge pill-income">Income</span>
+                {% else %}
+                  <span class="pill-badge pill-expense">Expense</span>
+                {% endif %}
+              </td>
+              <td class="mono-val" style="font-weight: 600; color: {% if t.transaction_type == 'IN' %}var(--income){% else %}var(--text-primary){% endif %};">
+                {% if t.transaction_type == 'IN' %}+{% else %}-{% endif %} ₹ {{ t.amount|floatformat:2 }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                No transactions recorded for this period.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Category Distribution Doughnut -->
+    <div class="chart-card">
+      <div class="card-title-bar" style="padding: 0 0 12px; border-bottom: 1px solid var(--border-subtle);">
+        <span>Expense Allocation</span>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="expenseCategoryChart"></canvas>
+      </div>
+    </div>
   </div>
 
 </div>
 
+<!-- Doughnut Chart Script -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const labels = {{ expense_category_labels|safe }};
   const data   = {{ expense_category_data|safe }};
 
+  const canvas = document.getElementById('expenseCategoryChart');
   if (labels.length > 0) {
-    new Chart(document.getElementById('expenseCategoryChart'), {
-      type: 'pie',
+    new Chart(canvas.getContext('2d'), {
+      type: 'doughnut',
       data: {
         labels: labels,
         datasets: [{
           data: data,
           backgroundColor: [
-            'rgba(91,141,238,0.8)',
-            'rgba(240,80,110,0.8)',
-            'rgba(34,199,122,0.8)',
-            'rgba(245,166,35,0.8)',
-            'rgba(162,105,235,0.8)',
-            'rgba(0,196,196,0.8)',
-            'rgba(255,130,90,0.8)',
+            '#6366f1',
+            '#f43f5e',
+            '#10b981',
+            '#f59e0b',
+            '#8b5cf6',
+            '#06b6d4',
+            '#ec4899',
+            '#14b8a6',
+            '#f97316'
           ],
-          borderColor: '#1a1d27',
-          borderWidth: 3,
+          borderColor: '#11131a',
+          borderWidth: 2,
+          hoverOffset: 4
         }]
       },
       options: {
@@ -298,27 +374,32 @@ document.addEventListener('DOMContentLoaded', function () {
           legend: {
             position: 'bottom',
             labels: {
-              color: '#848aa8',
-              font: { family: 'Inter', size: 12 },
+              color: '#94a3b8',
+              font: { family: 'Inter', size: 11 },
               usePointStyle: true,
-              pointStyleWidth: 9,
-              padding: 18,
+              pointStyleWidth: 8,
+              padding: 12
             }
           },
           tooltip: {
-            backgroundColor: '#21253a',
-            borderColor: 'rgba(255,255,255,0.07)',
+            backgroundColor: '#171a24',
+            borderColor: 'rgba(255,255,255,0.1)',
             borderWidth: 1,
-            titleColor: '#e8eaf2',
-            bodyColor: '#848aa8',
-            padding: 11,
+            titleColor: '#f8fafc',
+            bodyColor: '#94a3b8',
+            padding: 10,
             callbacks: {
-              label: c => '  ₹ ' + c.parsed.toLocaleString()
+              label: function(c) {
+                return ' ' + c.label + ': ₹ ' + c.parsed.toLocaleString();
+              }
             }
           }
-        }
+        },
+        cutout: '68%'
       }
     });
+  } else {
+    canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:0.84rem;">No expense data this month</div>';
   }
 });
 </script>

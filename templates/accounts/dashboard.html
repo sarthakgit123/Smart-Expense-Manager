@@ -1,424 +1,597 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard — Smart Expense Manager{% endblock %}
 
 {% block content %}
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
-  :root {
-    --page-bg:      #111318;
-    --surface-1:    #1a1d27;
-    --surface-hover:#232736;
-    --border:       rgba(255,255,255,0.06);
-    --border-hover: rgba(255,255,255,0.12);
-    --green:        #22c77a;
-    --green-dim:    rgba(34,199,122,0.12);
-    --red:          #f0506e;
-    --red-dim:      rgba(240,80,110,0.12);
-    --blue:         #5b8dee;
-    --blue-dim:     rgba(91,141,238,0.12);
-    --amber:        #f5a623;
-    --amber-dim:    rgba(245,166,35,0.12);
-    --text-1:       #e8eaf2;
-    --text-2:       #848aa8;
-    --text-3:       #50566e;
-    --font:         'Inter', sans-serif;
-    --mono:         'JetBrains Mono', monospace;
-    --radius:       10px;
-    --radius-lg:    14px;
-  }
-
-  body { background: var(--page-bg) !important; color: var(--text-1); font-family: var(--font); }
-
-  /* ── Page title row ── */
-  .page-title-row {
-    padding: 22px 0 20px;
+  /* ── Header ── */
+  .dash-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 20px;
     margin-bottom: 24px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
+    gap: 16px;
   }
 
-  .page-title {
-    font-size: 1.25rem;
+  .dash-title-wrap h1 {
+    font-size: 1.45rem;
     font-weight: 700;
-    letter-spacing: -0.4px;
-    color: var(--text-1);
-  }
-  .page-title em { font-style: normal; color: var(--blue); }
-
-  .page-sub {
-    font-size: 0.78rem;
-    color: var(--text-3);
-    margin-top: 3px;
-  }
-
-  /* ── Stat Cards ── */
-  .stat-row {
-    display: grid;
-    grid-template-columns: repeat(3,1fr);
-    gap: 14px;
-    margin-bottom: 30px;
-  }
-  @media(max-width:700px){ .stat-row{ grid-template-columns:1fr; } }
-
-  .stat-card {
-    background: var(--surface-1);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px 22px;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.18s, box-shadow 0.18s;
-  }
-  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
-
-  .stat-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    border-radius: 2px 2px 0 0;
-  }
-  .sc-green::after { background: var(--green); }
-  .sc-red::after   { background: var(--red); }
-  .sc-blue::after  { background: var(--blue); }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 110px; height: 110px;
-    border-radius: 50%;
-    opacity: 0.07;
-    filter: blur(28px);
-    pointer-events: none;
-  }
-  .sc-green::before { background: var(--green); }
-  .sc-red::before   { background: var(--red); }
-  .sc-blue::before  { background: var(--blue); }
-
-  .stat-tag {
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.1px;
-    color: var(--text-3);
-    margin-bottom: 8px;
-  }
-
-  .stat-num {
-    font-family: var(--mono);
-    font-size: 1.6rem;
-    font-weight: 500;
+    color: var(--text-primary);
     letter-spacing: -0.5px;
-    line-height: 1.1;
-  }
-  .sc-green .stat-num { color: var(--green); }
-  .sc-red   .stat-num { color: var(--red); }
-  .sc-blue  .stat-num { color: var(--blue); }
-
-  .stat-icon { font-size: 1rem; opacity: 0.5; margin-bottom: 10px; display: block; }
-
-  /* ── Section Label ── */
-  .sec-label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.3px;
-    color: var(--text-3);
-    margin: 28px 0 12px;
+    margin: 0;
   }
 
-  /* ── Data Cards / Tables ── */
-  .d-card {
-    background: var(--surface-1);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    margin-bottom: 22px;
+  .dash-title-wrap p {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    margin: 4px 0 0;
   }
 
-  .d-card-head {
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--text-1);
+  .dash-header-actions {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 10px;
   }
 
-  .d-card table { width: 100%; border-collapse: collapse; }
-
-  .d-card thead th {
-    padding: 9px 18px;
-    background: rgba(255,255,255,0.025);
-    color: var(--text-3);
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.9px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
+  .year-filter-select {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.84rem;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .year-filter-select:focus {
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 2px var(--brand-glow);
   }
 
-  .d-card tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
-  .d-card tbody tr:last-child { border-bottom: none; }
-  .d-card tbody tr:hover { background: var(--surface-hover); }
-
-  .d-card tbody td {
-    padding: 12px 18px;
-    color: var(--text-2);
-    font-size: 0.85rem;
-    vertical-align: middle;
+  /* ── Stat Metric Cards ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
   }
-  .d-card tbody td:first-child { color: var(--text-1); font-weight: 500; font-size: 0.86rem; }
 
-  .empty-state td { text-align: center; padding: 36px !important; color: var(--text-3); font-size: 0.82rem; }
-
-  /* ── Pills ── */
-  .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.74rem; font-weight: 600; }
-  .pill-green { background: var(--green-dim); color: var(--green); }
-  .pill-red   { background: var(--red-dim);   color: var(--red); }
-  .pill-amber { background: var(--amber-dim); color: var(--amber); }
-
-  /* ── Mono ── */
-  .mono { font-family: var(--mono); font-size: 0.83rem; font-weight: 500; }
-  .mono-over { color: var(--red); }
-
-  /* ── Table buttons ── */
-  .tbl-btn {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 11px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-decoration: none;
-    border: 1px solid transparent;
-    transition: all 0.13s;
+  @media (max-width: 768px) {
+    .metrics-grid { grid-template-columns: 1fr; }
   }
-  .tbl-edit { background: var(--amber-dim); color: var(--amber); border-color: rgba(245,166,35,0.18); }
-  .tbl-edit:hover { background: rgba(245,166,35,0.22); color: var(--amber); }
-  .tbl-del  { background: var(--red-dim); color: var(--red); border-color: rgba(240,80,110,0.18); margin-left: 5px; }
-  .tbl-del:hover { background: rgba(240,80,110,0.22); color: var(--red); }
 
-  /* ── Budget bar ── */
-  .bbar-wrap { height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; margin-top: 5px; min-width: 70px; overflow: hidden; }
-  .bbar { height: 100%; border-radius: 4px; }
-
-  /* ── Chart ── */
-  .chart-card {
-    background: var(--surface-1);
-    border: 1px solid var(--border);
+  .metric-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     padding: 22px 24px;
-    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
   }
 
-  .chart-top {
+  .metric-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-strong);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .card-income::before { background: var(--income); }
+  .card-expense::before { background: var(--expense); }
+  .card-savings::before { background: var(--brand-primary); }
+
+  .metric-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .metric-badge-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .card-income .metric-badge-icon { background: var(--income-dim); color: var(--income); }
+  .card-expense .metric-badge-icon { background: var(--expense-dim); color: var(--expense); }
+  .card-savings .metric-badge-icon { background: rgba(99, 102, 241, 0.12); color: var(--brand-primary); }
+
+  .metric-value {
+    font-family: var(--font-mono);
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.8px;
+    line-height: 1.15;
+  }
+
+  .card-income .metric-value { color: var(--income); }
+  .card-expense .metric-value { color: var(--expense); }
+  .card-savings .metric-value { color: var(--text-primary); }
+
+  /* ── Section Header ── */
+  .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 32px 0 14px;
+  }
+
+  .section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-link {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--brand-primary);
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .section-link:hover { opacity: 0.8; }
+
+  /* ── Chart Container ── */
+  .chart-wrapper-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 24px 26px;
+    margin-bottom: 30px;
+  }
+
+  .chart-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 10px;
   }
 
-  .chart-title { font-size: 0.9rem; font-weight: 700; color: var(--text-1); }
-
-  .yr-select {
-    background: var(--surface-1);
-    border: 1px solid var(--border);
-    color: var(--text-2);
-    padding: 5px 11px;
-    border-radius: var(--radius);
-    font-family: var(--font);
-    font-size: 0.8rem;
-    outline: none;
-    cursor: pointer;
+  .chart-legend-wrap {
+    display: flex;
+    gap: 16px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
   }
-  .yr-select:focus { border-color: var(--blue); }
-  .yr-select option { background: #1a1d27; }
 
-  #monthlyBarChart { max-height: 280px; }
+  .chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  #monthlyBarChart {
+    width: 100% !important;
+    max-height: 290px;
+  }
+
+  /* ── Tables & Lists ── */
+  .data-table-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+  }
+
+  .data-table thead th {
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .data-table tbody tr {
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background-color 0.12s ease;
+  }
+  .data-table tbody tr:last-child { border-bottom: none; }
+  .data-table tbody tr:hover { background: var(--bg-surface-elevated); }
+
+  .data-table tbody td {
+    padding: 13px 20px;
+    color: var(--text-secondary);
+    font-size: 0.86rem;
+    vertical-align: middle;
+  }
+
+  .data-table tbody td:first-child {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .mono-val {
+    font-family: var(--font-mono);
+    font-weight: 500;
+  }
+
+  /* ── Status Badges & Pills ── */
+  .pill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.74rem;
+    font-weight: 600;
+  }
+
+  .pill-income { background: var(--income-dim); color: var(--income); }
+  .pill-expense { background: var(--expense-dim); color: var(--expense); }
+  .pill-warning { background: var(--budget-dim); color: var(--budget); }
+  .pill-neutral { background: rgba(255, 255, 255, 0.06); color: var(--text-secondary); }
+
+  /* ── Action Buttons in Tables ── */
+  .table-action-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+  }
+
+  .btn-tbl-edit {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--budget);
+    border-color: rgba(245, 158, 11, 0.2);
+  }
+  .btn-tbl-edit:hover {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--budget);
+  }
+
+  .btn-tbl-delete {
+    background: var(--expense-dim);
+    color: var(--expense);
+    border-color: rgba(244, 63, 94, 0.2);
+    margin-left: 4px;
+  }
+  .btn-tbl-delete:hover {
+    background: rgba(244, 63, 94, 0.22);
+    color: var(--expense);
+  }
+
+  /* ── Budget Progress Bar ── */
+  .budget-bar-container {
+    width: 100%;
+    min-width: 110px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+
+  .budget-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+  }
+
+  .empty-row-cell {
+    text-align: center;
+    padding: 36px 20px !important;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
 </style>
 
-<div style="padding-top: 8px;">
+<div class="dashboard-page">
 
-  <!-- Page Title -->
-  <div class="page-title-row">
-    <div class="page-title">Finance <em>Dashboard</em></div>
-    <div class="page-sub">Overview of your income, expenses and budgets</div>
-  </div>
+  <!-- Header -->
+  <header class="dash-header">
+    <div class="dash-title-wrap">
+      <h1>Financial Overview</h1>
+      <p>Tracking activity and budget limits for {{ selected_year }}</p>
+    </div>
 
-  <!-- Stat Cards -->
-  <div class="stat-row">
-    <div class="stat-card sc-green">
-      <span class="stat-icon">↑</span>
-      <div class="stat-tag">Total Income</div>
-      <div class="stat-num">₹ {{ total_income }}</div>
-    </div>
-    <div class="stat-card sc-red">
-      <span class="stat-icon">↓</span>
-      <div class="stat-tag">Total Expense</div>
-      <div class="stat-num">₹ {{ total_expense }}</div>
-    </div>
-    <div class="stat-card sc-blue">
-      <span class="stat-icon">◈</span>
-      <div class="stat-tag">Savings</div>
-      <div class="stat-num">₹ {{ savings }}</div>
-    </div>
-  </div>
-
-  <!-- Transactions -->
-  <div class="sec-label">All Transactions</div>
-  <div class="d-card">
-    <div class="d-card-head">🗒 Transactions</div>
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th><th>Category</th><th>Type</th>
-            <th>Amount</th><th>Description</th><th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for t in transactions %}
-          <tr>
-            <td>{{ t.date }}</td>
-            <td>{{ t.category.name }}</td>
-            <td>
-              {% if t.transaction_type == "IN" %}
-                <span class="pill pill-green">Income</span>
-              {% else %}
-                <span class="pill pill-red">Expense</span>
-              {% endif %}
-            </td>
-            <td class="mono">₹ {{ t.amount }}</td>
-            <td>{{ t.description|default:"—" }}</td>
-            <td>
-              <a href="{% url 'accounts:transaction-edit' t.id %}" class="tbl-btn tbl-edit">Edit</a>
-              <a href="{% url 'accounts:transaction-delete' t.id %}" class="tbl-btn tbl-del"
-                 onclick="return confirm('Delete this transaction?');">Delete</a>
-            </td>
-          </tr>
+    <div class="dash-header-actions">
+      <form method="get" id="yearForm">
+        <select name="year" class="year-filter-select" onchange="document.getElementById('yearForm').submit()">
+          {% for y in years %}
+            <option value="{{ y.year }}" {% if y.year == selected_year %}selected{% endif %}>Year {{ y.year }}</option>
           {% empty %}
-          <tr class="empty-state"><td colspan="6">No transactions found</td></tr>
+            <option value="{{ selected_year }}" selected>Year {{ selected_year }}</option>
           {% endfor %}
-        </tbody>
-      </table>
+        </select>
+      </form>
+    </div>
+  </header>
+
+  <!-- Metric Stat Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card card-income">
+      <div class="metric-label">
+        <span>Total Income</span>
+        <span class="metric-badge-icon">↑</span>
+      </div>
+      <div class="metric-value">₹ {{ total_income|floatformat:2 }}</div>
+    </div>
+
+    <div class="metric-card card-expense">
+      <div class="metric-label">
+        <span>Total Expenses</span>
+        <span class="metric-badge-icon">↓</span>
+      </div>
+      <div class="metric-value">₹ {{ total_expense|floatformat:2 }}</div>
+    </div>
+
+    <div class="metric-card card-savings">
+      <div class="metric-label">
+        <span>Net Savings</span>
+        <span class="metric-badge-icon">◈</span>
+      </div>
+      <div class="metric-value">₹ {{ savings|floatformat:2 }}</div>
     </div>
   </div>
 
-  <!-- Budgets -->
-  <div class="sec-label">Budget Overview</div>
-  <div class="d-card">
-    <div class="d-card-head">💰 Budgets</div>
+  <!-- Monthly Income vs Expense Chart -->
+  <div class="chart-wrapper-card">
+    <div class="chart-head">
+      <div class="section-title">📊 Cash Flow Comparison — {{ selected_year }}</div>
+      <div class="chart-legend-wrap">
+        <div class="chart-legend-item">
+          <span class="legend-dot" style="background: var(--income);"></span> Income
+        </div>
+        <div class="chart-legend-item">
+          <span class="legend-dot" style="background: var(--expense);"></span> Expenses
+        </div>
+      </div>
+    </div>
+    <canvas id="monthlyBarChart"></canvas>
+  </div>
+
+  <!-- Active Budgets Section -->
+  <div class="section-heading">
+    <div class="section-title">💰 Monthly Budgets (Current Month)</div>
+    <a href="{% url 'accounts:budget-add' %}" class="section-link">+ Set Budget</a>
+  </div>
+
+  <div class="data-table-card">
     <div class="table-responsive">
-      <table>
+      <table class="data-table">
         <thead>
           <tr>
-            <th>Category</th><th>Limit</th><th>Spent</th>
-            <th>Remaining</th><th>Status</th><th>Actions</th>
+            <th>Category</th>
+            <th>Monthly Limit</th>
+            <th>Spent</th>
+            <th>Remaining</th>
+            <th>Utilization</th>
+            <th>Status</th>
+            <th style="text-align: right;">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for budget in budgets %}
           <tr>
-            <td>{{ budget.category.name }}</td>
-            <td class="mono">₹ {{ budget.monthly_limit }}</td>
-            <td class="mono">₹ {{ budget.get_spent_amount }}</td>
-            <td>
-              <span class="mono {% if budget.is_over_budget %}mono-over{% endif %}">
-                ₹ {{ budget.get_remaining }}
-              </span>
-              <div class="bbar-wrap">
-                <div class="bbar" style="
-                  width: {{ budget.get_spent_amount|default:0 }}%;
-                  max-width: 100%;
-                  background: {% if budget.is_over_budget %}var(--red){% else %}var(--green){% endif %};
+            <td style="font-weight: 600;">{{ budget.category.name }}</td>
+            <td class="mono-val">₹ {{ budget.monthly_limit|floatformat:2 }}</td>
+            <td class="mono-val">₹ {{ budget.get_spent_amount|floatformat:2 }}</td>
+            <td class="mono-val {% if budget.is_over_budget %}text-danger{% endif %}">
+              ₹ {{ budget.get_remaining|floatformat:2 }}
+            </td>
+            <td style="min-width: 140px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.74rem; color: var(--text-muted); font-family: var(--font-mono);">
+                <span>{{ budget.get_spent_percentage }}%</span>
+              </div>
+              <div class="budget-bar-container">
+                <div class="budget-bar-fill" style="
+                  width: {{ budget.get_spent_percentage }}%;
+                  background: {% if budget.is_over_budget %}var(--expense){% elif budget.get_spent_percentage > 80 %}var(--budget){% else %}var(--income){% endif %};
                 "></div>
               </div>
             </td>
             <td>
               {% if budget.is_over_budget %}
-                <span class="pill pill-red">Over Budget</span>
+                <span class="pill-badge pill-expense">Over Limit</span>
+              {% elif budget.get_spent_percentage > 80 %}
+                <span class="pill-badge pill-warning">Near Limit</span>
               {% else %}
-                <span class="pill pill-green">On Track</span>
+                <span class="pill-badge pill-income">On Track</span>
               {% endif %}
             </td>
-            <td>
-              <a href="{% url 'accounts:budget-edit' budget.pk %}" class="tbl-btn tbl-edit">Edit</a>
-              <a href="{% url 'accounts:budget-delete' budget.pk %}" class="tbl-btn tbl-del">Delete</a>
+            <td style="text-align: right;">
+              <a href="{% url 'accounts:budget-edit' budget.pk %}" class="table-action-btn btn-tbl-edit">Edit</a>
+              <a href="{% url 'accounts:budget-delete' budget.pk %}" class="table-action-btn btn-tbl-delete">Delete</a>
             </td>
           </tr>
           {% empty %}
-          <tr class="empty-state"><td colspan="6">No budgets set for this month</td></tr>
+          <tr>
+            <td colspan="7" class="empty-row-cell">
+              No budgets configured for this month. <a href="{% url 'accounts:budget-add' %}" style="color: var(--brand-primary); text-decoration: none;">Set a budget →</a>
+            </td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- Chart -->
-  <div class="chart-card">
-    <div class="chart-top">
-      <div class="chart-title">Monthly Income vs Expense — {{ current_year }}</div>
-      <form method="get">
-        <select name="year" class="yr-select" onchange="this.form.submit()">
-          {% for y in years %}
-            <option value="{{ y.year }}" {% if y.year == selected_year %}selected{% endif %}>{{ y.year }}</option>
+  <!-- Recent Transactions -->
+  <div class="section-heading">
+    <div class="section-title">🗒️ Recent Transactions</div>
+    <a href="{% url 'accounts:transaction-add' %}" class="section-link">+ Add Transaction</a>
+  </div>
+
+  <div class="data-table-card">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in transactions %}
+          <tr>
+            <td class="mono-val">{{ t.date|date:"Y-m-d" }}</td>
+            <td>
+              {% if t.category %}
+                <span class="pill-badge pill-neutral">{{ t.category.name }}</span>
+              {% else %}
+                <span class="pill-badge pill-neutral" style="opacity: 0.6;">Uncategorized</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if t.transaction_type == "IN" %}
+                <span class="pill-badge pill-income">Income</span>
+              {% else %}
+                <span class="pill-badge pill-expense">Expense</span>
+              {% endif %}
+            </td>
+            <td class="mono-val" style="font-weight: 600; color: {% if t.transaction_type == 'IN' %}var(--income){% else %}var(--text-primary){% endif %};">
+              {% if t.transaction_type == 'IN' %}+{% else %}-{% endif %} ₹ {{ t.amount|floatformat:2 }}
+            </td>
+            <td style="color: var(--text-muted); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              {{ t.description|default:"—" }}
+            </td>
+            <td style="text-align: right;">
+              <a href="{% url 'accounts:transaction-edit' t.id %}" class="table-action-btn btn-tbl-edit">Edit</a>
+              <a href="{% url 'accounts:transaction-delete' t.id %}" class="table-action-btn btn-tbl-delete">Delete</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="empty-row-cell">
+              No transactions recorded yet. <a href="{% url 'accounts:transaction-add' %}" style="color: var(--brand-primary); text-decoration: none;">Add your first transaction →</a>
+            </td>
+          </tr>
           {% endfor %}
-        </select>
-      </form>
+        </tbody>
+      </table>
     </div>
-    <canvas id="monthlyBarChart"></canvas>
   </div>
 
 </div>
 
+<!-- Chart.js Script -->
 <script>
-  const incomeData  = {{ monthly_income|safe }};
-  const expenseData = {{ monthly_expense|safe }};
+  document.addEventListener('DOMContentLoaded', function () {
+    const incomeData  = {{ monthly_income|safe }};
+    const expenseData = {{ monthly_expense|safe }};
 
-  new Chart(document.getElementById('monthlyBarChart').getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-      datasets: [
-        { label: 'Income',  data: incomeData,  backgroundColor: 'rgba(34,199,122,0.7)',  borderRadius: 5, borderSkipped: false },
-        { label: 'Expense', data: expenseData, backgroundColor: 'rgba(240,80,110,0.7)', borderRadius: 5, borderSkipped: false }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'top',
-          labels: { color: '#848aa8', font: { family: 'Inter', size: 12 }, usePointStyle: true, pointStyleWidth: 9 }
-        },
-        tooltip: {
-          backgroundColor: '#21253a',
-          borderColor: 'rgba(255,255,255,0.07)',
-          borderWidth: 1,
-          titleColor: '#e8eaf2',
-          bodyColor: '#848aa8',
-          padding: 11,
-          callbacks: { label: c => '  ₹ ' + c.parsed.y.toLocaleString() }
-        }
+    const ctx = document.getElementById('monthlyBarChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [
+          {
+            label: 'Income',
+            data: incomeData,
+            backgroundColor: 'rgba(16, 185, 129, 0.85)',
+            hoverBackgroundColor: '#10b981',
+            borderRadius: 6,
+            borderSkipped: false,
+            barPercentage: 0.6,
+            categoryPercentage: 0.7
+          },
+          {
+            label: 'Expense',
+            data: expenseData,
+            backgroundColor: 'rgba(244, 63, 94, 0.85)',
+            hoverBackgroundColor: '#f43f5e',
+            borderRadius: 6,
+            borderSkipped: false,
+            barPercentage: 0.6,
+            categoryPercentage: 0.7
+          }
+        ]
       },
-      scales: {
-        x: { ticks: { color: '#50566e', font: { family: 'Inter', size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-        y: {
-          beginAtZero: true,
-          ticks: { color: '#50566e', font: { family: 'JetBrains Mono', size: 10 }, callback: v => '₹' + v.toLocaleString() },
-          grid: { color: 'rgba(255,255,255,0.04)' }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#171a24',
+            borderColor: 'rgba(255, 255, 255, 0.12)',
+            borderWidth: 1,
+            titleColor: '#f8fafc',
+            bodyColor: '#94a3b8',
+            padding: 12,
+            titleFont: { family: 'Inter', size: 13, weight: '600' },
+            bodyFont: { family: 'JetBrains Mono', size: 12 },
+            callbacks: {
+              label: function(ctx) {
+                return ' ' + ctx.dataset.label + ': ₹ ' + ctx.parsed.y.toLocaleString();
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.04)', drawBorder: false },
+            ticks: { color: '#64748b', font: { family: 'Inter', size: 11 } }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(255, 255, 255, 0.04)', drawBorder: false },
+            ticks: {
+              color: '#64748b',
+              font: { family: 'JetBrains Mono', size: 10 },
+              callback: function(v) { return '₹ ' + v.toLocaleString(); }
+            }
+          }
         }
       }
-    }
+    });
   });
 </script>
 

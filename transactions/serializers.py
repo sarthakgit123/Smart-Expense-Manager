@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Q
 from .models import Category, Transaction, Budget
 
 
@@ -46,6 +47,14 @@ class TransactionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated:
+            self.fields['category'].queryset = Category.objects.filter(
+                Q(is_default=True) | Q(user=request.user)
+            )
+
     def validate(self, data):
         category = data.get('category')
         transaction_type = data.get('transaction_type')
@@ -77,3 +86,13 @@ class BudgetSerializer(serializers.ModelSerializer):
             'created_at'
         ]
         read_only_fields = ['id', 'created_at']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated:
+            self.fields['category'].queryset = Category.objects.filter(
+                Q(is_default=True) | Q(user=request.user),
+                category_type=Category.EXPENSE
+            )
+

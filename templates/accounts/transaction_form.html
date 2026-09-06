@@ -1,277 +1,273 @@
 {% extends "base.html" %}
 
-{% block title %}Transaction{% endblock %}
+{% block title %}{% if object %}Edit Transaction{% else %}Add Transaction{% endif %} — Smart Expense Manager{% endblock %}
 
 {% block content %}
 
 <style>
-  .form-wrap {
-    max-width: 480px;
-    margin: 40px auto;
+  .form-page-container {
+    max-width: 500px;
+    margin: 36px auto;
   }
 
   .form-card {
-    background: #1a1d27;
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 14px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
     overflow: hidden;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
   }
 
   .form-card-header {
-    padding: 20px 28px 18px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
   }
 
-  .form-card-title {
-    font-size: 1rem;
+  .form-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--brand-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
     font-weight: 700;
-    color: #e8eaf2;
+  }
+
+  .form-header-title h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
     letter-spacing: -0.2px;
   }
 
+  .form-header-title p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 2px 0 0;
+  }
+
   .form-card-body {
-    padding: 24px 28px;
+    padding: 26px 28px 30px;
   }
 
-  /* ── Field groups ── */
-  .f-group {
-    margin-bottom: 18px;
+  /* ── Form Inputs ── */
+  .input-field-group {
+    margin-bottom: 20px;
   }
 
-  .f-label {
+  .input-label {
     display: block;
-    font-size: 0.74rem;
+    font-size: 0.73rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.9px;
-    color: #50566e;
-    margin-bottom: 7px;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
   }
 
-  /* Override all Django form inputs */
-  .f-group input,
-  .f-group select,
-  .f-group textarea,
-  .form-card input[type="text"],
-  .form-card input[type="number"],
-  .form-card input[type="date"],
-  .form-card select,
-  .form-card textarea {
+  .form-control-dark {
     width: 100%;
-    background: #111318 !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    border-radius: 8px !important;
-    color: #e8eaf2 !important;
-    font-family: 'Inter', sans-serif;
+    background: var(--bg-canvas) !important;
+    border: 1px solid var(--border-strong) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-sans);
     font-size: 0.88rem;
-    padding: 9px 13px !important;
+    padding: 10px 14px !important;
     outline: none;
-    transition: border-color 0.15s;
-    box-shadow: none !important;
-    -webkit-appearance: none;
-  }
-
-  .f-group input:focus,
-  .f-group select:focus,
-  .f-group textarea:focus,
-  .form-card input:focus,
-  .form-card select:focus,
-  .form-card textarea:focus {
-    border-color: #5b8dee !important;
-    box-shadow: 0 0 0 3px rgba(91,141,238,0.12) !important;
-  }
-
-  /* Select arrow */
-  .form-card select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23848aa8' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: right 12px center !important;
-    padding-right: 32px !important;
-    cursor: pointer;
-  }
-
-  /* Select options */
-  .form-card select option {
-    background: #1a1d27;
-    color: #e8eaf2;
-  }
-
-  .f-hint {
-    font-size: 0.72rem;
-    color: #50566e;
-    margin-top: 5px;
-  }
-
-  /* ── Divider ── */
-  .f-divider {
-    height: 1px;
-    background: rgba(255,255,255,0.05);
-    margin: 22px 0;
-  }
-
-  /* ── Buttons ── */
-  .f-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 24px;
-  }
-
-  .f-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 9px 22px;
-    border-radius: 8px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.84rem;
-    font-weight: 600;
-    text-decoration: none;
-    border: 1px solid transparent;
-    cursor: pointer;
     transition: all 0.15s ease;
   }
 
-  .f-btn-primary {
-    background: #5b8dee;
-    color: #fff;
-    border-color: #5b8dee;
+  .form-control-dark:focus {
+    border-color: var(--brand-primary) !important;
+    box-shadow: 0 0 0 3px var(--brand-glow) !important;
+  }
+
+  select.form-control-dark {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 14px center !important;
+    padding-right: 36px !important;
+    -webkit-appearance: none;
+  }
+
+  select.form-control-dark option {
+    background: #11131a;
+    color: #f8fafc;
+  }
+
+  /* Amount prefix wrapper */
+  .amount-input-wrap {
+    position: relative;
+  }
+  .amount-prefix {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+  .amount-input-wrap input {
+    padding-left: 32px !important;
+    font-family: var(--font-mono) !important;
+    font-weight: 500;
+  }
+
+  /* Field error alert */
+  .field-error-msg {
+    color: var(--expense);
+    font-size: 0.75rem;
+    margin-top: 6px;
+  }
+
+  /* ── Action buttons ── */
+  .form-btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .btn-submit-primary {
     flex: 1;
-  }
-  .f-btn-primary:hover {
-    background: #4a7cde;
+    background: var(--brand-primary);
     color: #fff;
-    box-shadow: 0 4px 14px rgba(91,141,238,0.3);
+    border: 1px solid var(--brand-primary);
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-submit-primary:hover {
+    background: var(--brand-primary-hover);
+    box-shadow: 0 4px 14px var(--brand-glow);
   }
 
-  .f-btn-ghost {
+  .btn-cancel-ghost {
     background: transparent;
-    color: #848aa8;
-    border-color: rgba(255,255,255,0.08);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 0.86rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
   }
-  .f-btn-ghost:hover {
-    color: #e8eaf2;
-    border-color: rgba(255,255,255,0.16);
-    background: rgba(255,255,255,0.04);
-  }
-
-  /* ── Type selector step ── */
-  .type-prompt {
-    text-align: center;
-    padding: 8px 0 4px;
-  }
-
-  .type-prompt p {
-    color: #848aa8;
-    font-size: 0.85rem;
-    margin-bottom: 20px;
-  }
-
-  .type-select-wrap {
-    margin-bottom: 20px;
+  .btn-cancel-ghost:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-elevated);
   }
 </style>
 
-<div class="form-wrap">
+<div class="form-page-container">
   <div class="form-card">
 
     <div class="form-card-header">
-      <span style="font-size:1.1rem;">{% if object %}✏️{% else %}➕{% endif %}</span>
-      <div class="form-card-title">
-        {% if object %}Edit Transaction{% else %}Add Transaction{% endif %}
+      <div class="form-header-icon">{% if object %}✏️{% else %}➕{% endif %}</div>
+      <div class="form-header-title">
+        <h2>{% if object %}Edit Transaction{% else %}New Transaction{% endif %}</h2>
+        <p>{% if object %}Update transaction details{% else %}Record income or expense transaction{% endif %}</p>
       </div>
     </div>
 
     <div class="form-card-body">
-
-      <!-- STEP 1: SELECT TYPE -->
-      {% if not object and not request.GET.transaction_type %}
-      <div class="type-prompt">
-        <p>Choose the transaction type to continue</p>
-        <form method="get">
-          <div class="f-group type-select-wrap">
-            <label class="f-label">{{ form.transaction_type.label }}</label>
-            {{ form.transaction_type }}
-          </div>
-          <button type="submit" class="f-btn f-btn-primary" style="width:100%;">
-            Continue →
-          </button>
-        </form>
-      </div>
-      {% endif %}
-
-      <!-- STEP 2: MAIN FORM -->
-      {% if object or request.GET.transaction_type %}
       <form method="post">
         {% csrf_token %}
 
-        {% if not object %}
-          <input type="hidden" name="transaction_type" value="{{ request.GET.transaction_type }}">
-
-          <!-- Show type as read-only badge -->
-          <div class="f-group">
-            <label class="f-label">Type</label>
-            <div style="display:inline-flex; align-items:center; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
-              {% if request.GET.transaction_type == 'IN' %}
-                background: rgba(34,199,122,0.12); color: #22c77a;
-              {% else %}
-                background: rgba(240,80,110,0.12); color: #f0506e;
-              {% endif %}
-            ">
-              {% if request.GET.transaction_type == 'IN' %}↑ Income{% else %}↓ Expense{% endif %}
-            </div>
-          </div>
-
-          <div class="f-divider"></div>
-
-        {% else %}
-          <div class="f-group">
-            <label class="f-label">{{ form.transaction_type.label }}</label>
-            {{ form.transaction_type }}
+        {% if form.non_field_errors %}
+          <div class="app-alert app-alert-error mb-3">
+            {{ form.non_field_errors }}
           </div>
         {% endif %}
 
-        <!-- CATEGORY -->
-        <div class="f-group">
-          <label class="f-label">{{ form.category.label }}</label>
+        <!-- Transaction Type -->
+        <div class="input-field-group">
+          <label class="input-label">Transaction Type</label>
+          <div class="form-control-dark-wrap">
+            {{ form.transaction_type }}
+          </div>
+          {% if form.transaction_type.errors %}
+            <div class="field-error-msg">{{ form.transaction_type.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Category -->
+        <div class="input-field-group">
+          <label class="input-label">Category</label>
           {{ form.category }}
+          {% if form.category.errors %}
+            <div class="field-error-msg">{{ form.category.errors|striptags }}</div>
+          {% endif %}
         </div>
 
-        <!-- AMOUNT -->
-        <div class="f-group">
-          <label class="f-label">{{ form.amount.label }}</label>
-          {{ form.amount }}
+        <!-- Amount -->
+        <div class="input-field-group">
+          <label class="input-label">Amount (INR)</label>
+          <div class="amount-input-wrap">
+            <span class="amount-prefix">₹</span>
+            {{ form.amount }}
+          </div>
+          {% if form.amount.errors %}
+            <div class="field-error-msg">{{ form.amount.errors|striptags }}</div>
+          {% endif %}
         </div>
 
-        <!-- DESCRIPTION -->
-        <div class="f-group">
-          <label class="f-label">{{ form.description.label }}</label>
-          {{ form.description }}
-        </div>
-
-        <!-- DATE -->
-        <div class="f-group">
-          <label class="f-label">{{ form.date.label }}</label>
+        <!-- Date -->
+        <div class="input-field-group">
+          <label class="input-label">Transaction Date</label>
           {{ form.date }}
-          <div class="f-hint">Format: MM/DD/YYYY &nbsp;·&nbsp; e.g. 02/10/2026</div>
+          {% if form.date.errors %}
+            <div class="field-error-msg">{{ form.date.errors|striptags }}</div>
+          {% endif %}
         </div>
 
-        <div class="f-divider"></div>
+        <!-- Description -->
+        <div class="input-field-group">
+          <label class="input-label">Description (Optional)</label>
+          {{ form.description }}
+          {% if form.description.errors %}
+            <div class="field-error-msg">{{ form.description.errors|striptags }}</div>
+          {% endif %}
+        </div>
 
-        <div class="f-actions">
-          <button type="submit" class="f-btn f-btn-primary">
+        <div class="form-btn-group">
+          <button type="submit" class="btn-submit-primary">
             {% if object %}Save Changes{% else %}Add Transaction{% endif %}
           </button>
-          <a href="{% url 'accounts:dashboard' %}" class="f-btn f-btn-ghost">Cancel</a>
+          <a href="{% url 'accounts:dashboard' %}" class="btn-cancel-ghost">Cancel</a>
         </div>
 
       </form>
-      {% endif %}
-
     </div>
+
   </div>
 </div>
+
+<script>
+  // Apply uniform dark classes to Django generated fields
+  document.querySelectorAll('.form-card input, .form-card select, .form-card textarea').forEach(el => {
+    el.classList.add('form-control-dark');
+  });
+
+  // Set default date to today if creating new transaction
+  const dateInput = document.querySelector('input[name="date"]');
+  if (dateInput && !dateInput.value) {
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.value = today;
+  }
+</script>
 
 {% endblock %}

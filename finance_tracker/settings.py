@@ -27,16 +27,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-smart-expense-manager-default-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-    ".vercel.app",  
-]
+allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,.vercel.app,.onrender.com,testserver")
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(",") if host.strip()]
+
 
 
 # Application definition
@@ -93,13 +91,23 @@ WSGI_APPLICATION = 'finance_tracker.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-     "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-        ssl_require=True,
-    )
-}
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=os.getenv("DB_SSL_REQUIRE", "True") == "True",
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -151,20 +159,22 @@ REST_FRAMEWORK = {
     ],
 }
 
-LOGIN_REDIRECT_URL = 'dashboard'
-LOGIN_URL = 'login'
-LOGOUT_REDIRECT_URL = 'login'
+LOGIN_REDIRECT_URL = 'accounts:dashboard'
+LOGIN_URL = 'accounts:login'
+LOGOUT_REDIRECT_URL = 'accounts:login'
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.sendgrid.net")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False") == "True"
 
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "apikey")
-EMAIL_HOST_PASSWORD = os.getenv("SENDGRID_API_KEY")
+EMAIL_HOST_PASSWORD = os.getenv("SENDGRID_API_KEY") or os.getenv("EMAIL_HOST_PASSWORD", "")
 
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL") or os.getenv("EMAIL_FROM") or "no-reply@smart-expense-manager.com"
+
 
 
 
@@ -177,12 +187,17 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Allauth settings (NEW SYNTAX)
-ACCOUNT_LOGIN_METHODS = {'email'}  # ✅ Use email to login
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # ✅ Required fields
+# Allauth & Socialaccount settings
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
 SOCIALACCOUNT_AUTO_SIGNUP = True
-LOGIN_REDIRECT_URL = '/accounts/dashboard/'
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+LOGIN_REDIRECT_URL = 'accounts:dashboard'
 
 # Google OAuth settings
 SOCIALACCOUNT_PROVIDERS = {
@@ -190,15 +205,13 @@ SOCIALACCOUNT_PROVIDERS = {
         "SCOPE": ["profile", "email"],
         "AUTH_PARAMS": {"access_type": "online"},
         "APP": {
-            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-            "secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+            "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
+            "secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
             "key": ""
         }
     }
 }
-CSRF_TRUSTED_ORIGINS = [
-       "https://*.vercel.app",
-]
+csrf_env = os.getenv("CSRF_TRUSTED_ORIGINS", "https://*.vercel.app,https://*.onrender.com")
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_env.split(",") if origin.strip()]
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SOCIALACCOUNT_LOGIN_ON_GET = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

@@ -1,184 +1,203 @@
 {% extends 'base.html' %}
 {% load socialaccount %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Sign In — Smart Expense Manager{% endblock %}
 
 {% block content %}
 
 <style>
-  .auth-wrap {
-    min-height: calc(100vh - 52px);
+  .auth-page-wrap {
+    min-height: calc(100vh - 120px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 32px 16px;
+    padding: 24px 16px;
   }
 
   .auth-card {
-    background: #1a1d27;
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
     width: 100%;
-    max-width: 400px;
+    max-width: 410px;
     overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
   }
 
   .auth-card-header {
-    padding: 28px 32px 22px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 32px 32px 22px;
+    border-bottom: 1px solid var(--border-subtle);
     text-align: center;
   }
 
-  .auth-logo {
+  .auth-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     font-size: 0.85rem;
     font-weight: 700;
-    color: #848aa8;
-    letter-spacing: 0.5px;
+    color: var(--text-primary);
     margin-bottom: 12px;
   }
-  .auth-logo span { color: #5b8dee; }
 
-  .auth-title {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #e8eaf2;
-    letter-spacing: -0.4px;
-    margin-bottom: 4px;
+  .auth-icon-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #6366f1, #4338ca);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: #fff;
   }
 
-  .auth-sub {
-    font-size: 0.8rem;
-    color: #50566e;
+  .auth-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.4px;
+    margin: 0;
+  }
+
+  .auth-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 4px 0 0;
   }
 
   .auth-card-body {
-    padding: 28px 32px 32px;
+    padding: 28px 32px 36px;
   }
 
-  /* Google button */
-  .btn-google {
+  /* Google Button */
+  .btn-google-auth {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     width: 100%;
-    padding: 10px 18px;
-    border-radius: 9px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #e8eaf2;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.85rem;
+    padding: 11px 18px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 0.86rem;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.15s ease;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
   }
-  .btn-google:hover {
-    background: rgba(255,255,255,0.08);
-    border-color: rgba(255,255,255,0.18);
-    color: #e8eaf2;
+  .btn-google-auth:hover {
+    background: var(--bg-surface-hover);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #fff;
   }
 
-  .google-icon {
-    width: 17px;
-    height: 17px;
+  .google-svg-icon {
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
   }
 
   /* Divider */
-  .auth-divider {
+  .auth-divider-line {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
   }
-  .auth-divider::before,
-  .auth-divider::after {
+  .auth-divider-line::before,
+  .auth-divider-line::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: rgba(255,255,255,0.06);
+    background: var(--border-subtle);
   }
-  .auth-divider span {
+  .auth-divider-line span {
     font-size: 0.72rem;
-    color: #50566e;
+    color: var(--text-muted);
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.9px;
   }
 
-  /* Inputs */
-  .f-group { margin-bottom: 14px; }
+  /* Form controls */
+  .auth-field-group {
+    margin-bottom: 16px;
+  }
 
-  .f-input {
+  .auth-input {
     width: 100%;
-    background: #111318 !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    border-radius: 9px !important;
-    color: #e8eaf2 !important;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.87rem;
+    background: var(--bg-canvas) !important;
+    border: 1px solid var(--border-strong) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
     padding: 10px 14px !important;
     outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    box-shadow: none !important;
+    transition: all 0.15s ease;
   }
-  .f-input::placeholder { color: #50566e; }
-  .f-input:focus {
-    border-color: #5b8dee !important;
-    box-shadow: 0 0 0 3px rgba(91,141,238,0.12) !important;
+  .auth-input::placeholder { color: var(--text-muted); }
+  .auth-input:focus {
+    border-color: var(--brand-primary) !important;
+    box-shadow: 0 0 0 3px var(--brand-glow) !important;
   }
 
-  /* Submit */
-  .btn-submit {
+  .btn-auth-submit {
     width: 100%;
-    padding: 10px;
-    background: #5b8dee;
+    padding: 11px;
+    background: var(--brand-primary);
     color: #fff;
-    border: none;
-    border-radius: 9px;
-    font-family: 'Inter', sans-serif;
+    border: 1px solid var(--brand-primary);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
     font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
-    margin-top: 6px;
+    margin-top: 8px;
   }
-  .btn-submit:hover {
-    background: #4a7cde;
-    box-shadow: 0 4px 16px rgba(91,141,238,0.35);
+  .btn-auth-submit:hover {
+    background: var(--brand-primary-hover);
+    box-shadow: 0 4px 16px var(--brand-glow);
   }
 
-  /* Footer link */
-  .auth-footer {
+  .auth-card-footer {
     text-align: center;
-    margin-top: 20px;
-    font-size: 0.8rem;
-    color: #50566e;
+    margin-top: 22px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
   }
-  .auth-footer a {
-    color: #5b8dee;
+  .auth-card-footer a {
+    color: var(--brand-primary);
     text-decoration: none;
     font-weight: 600;
   }
-  .auth-footer a:hover { text-decoration: underline; }
+  .auth-card-footer a:hover {
+    text-decoration: underline;
+  }
 </style>
 
-<div class="auth-wrap">
+<div class="auth-page-wrap">
   <div class="auth-card">
 
     <div class="auth-card-header">
-      <div class="auth-logo">Finance <span>Tracker</span></div>
-      <div class="auth-title">Welcome back</div>
-      <div class="auth-sub">Sign in to your account</div>
+      <div class="auth-brand-badge">
+        <div class="auth-icon-circle">₹</div>
+        <span>Finance Tracker</span>
+      </div>
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-subtitle">Sign in to manage your income and expenses</p>
     </div>
 
     <div class="auth-card-body">
 
-      <!-- Google -->
-      <a href="{% provider_login_url 'google' %}" class="btn-google">
-        <svg class="google-icon" viewBox="0 0 24 24">
+      <!-- Google OAuth -->
+      <a href="{% provider_login_url 'google' %}" class="btn-google-auth">
+        <svg class="google-svg-icon" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
@@ -187,27 +206,30 @@
         Continue with Google
       </a>
 
-      <div class="auth-divider"><span>or</span></div>
+      <div class="auth-divider-line">
+        <span>Or continue with username</span>
+      </div>
 
-      <!-- Login Form -->
+      <!-- Password Login -->
       <form method="post">
         {% csrf_token %}
-        <div class="f-group">
-          <input type="text" name="username" class="f-input"
+        <div class="auth-field-group">
+          <input type="text" name="username" class="auth-input"
                  placeholder="Username" required autocomplete="username">
         </div>
-        <div class="f-group">
-          <input type="password" name="password" class="f-input"
+        <div class="auth-field-group">
+          <input type="password" name="password" class="auth-input"
                  placeholder="Password" required autocomplete="current-password">
         </div>
-        <button type="submit" class="btn-submit">Sign In</button>
+        <button type="submit" class="btn-auth-submit">Sign In</button>
       </form>
 
-      <div class="auth-footer">
-        Don't have an account? <a href="{% url 'accounts:register' %}">Register</a>
+      <div class="auth-card-footer">
+        Don't have an account? <a href="{% url 'accounts:register' %}">Create account</a>
       </div>
 
     </div>
+
   </div>
 </div>
 

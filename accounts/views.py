@@ -1,26 +1,21 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView, DeleteView
 from django.db import IntegrityError
 from django.contrib import messages
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.utils.timezone import now
 from datetime import date
 from calendar import monthrange
-from accounts.utils import send_budget_alert
-from django.utils.timezone import now
 from django.db.models.functions import ExtractMonth
-from django.db.models import Q
-from .utils import send_email_async
-
-
-
-
-
-from transactions.models import Category, Transaction, Budget  # <-- IMPORTANT
+from accounts.utils import send_budget_alert, send_email_async
+from transactions.models import Category, Transaction, Budget
 
 
 # ---------------------------
@@ -48,8 +43,13 @@ def register_view(request):
         if password1 != password2:
             errors.append('Passwords do not match.')
         
-        if len(password1) < 8:
-            errors.append('Password must be at least 8 characters long.')
+        # Run Django password validators
+        if password1:
+            try:
+                temp_user = User(username=username, email=email, first_name=first_name, last_name=last_name)
+                validate_password(password1, user=temp_user)
+            except ValidationError as e:
+                errors.extend(e.messages)
         
         # Check if username already exists
         if User.objects.filter(username=username).exists():
@@ -85,7 +85,7 @@ def register_view(request):
                 first_name=first_name,
                 last_name=last_name
             )
-            # FIX: Specify the backend explicitly
+            # Specify the backend explicitly
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, f'Welcome {first_name}! Your account has been created.')
             return redirect('accounts:dashboard')
@@ -230,7 +230,7 @@ def dashboard_view(request):
 # TRANSACTION CRUD (HTML)
 # ---------------------------
 
-class TransactionCreateView(CreateView):
+class TransactionCreateView(LoginRequiredMixin, CreateView):
     model = Transaction
     fields = ['transaction_type', 'category', 'amount', 'description', 'date']
     template_name = 'accounts/transaction_form.html'
@@ -263,37 +263,10 @@ class TransactionCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        response = super().form_valid(form)
+        return super().form_valid(form)
 
-        self.check_budget_alert(form.instance)
-        return response
 
-    def check_budget_alert(self, transaction):
-        if transaction.transaction_type != 'EX':
-            return
-
-        today = now().date()
-        budgets = Budget.objects.filter(
-            user=transaction.user,
-            category=transaction.category,
-            month=today.month,
-            year=today.year,
-            alert_sent=False,
-        )
-
-        for budget in budgets:
-            spent = budget.get_spent_amount()
-            if spent > budget.monthly_limit:
-                send_email_async(
-                    send_budget_alert,
-                    transaction.user,
-                    budget,
-                    spent,
-                )
-                budget.alert_sent = True
-                budget.save()
-
-class TransactionUpdateView(UpdateView):
+class TransactionUpdateView(LoginRequiredMixin, UpdateView):
     model = Transaction
     fields = ['transaction_type', 'category', 'amount', 'description', 'date']
     template_name = 'accounts/transaction_form.html'
@@ -305,9 +278,9 @@ class TransactionUpdateView(UpdateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
 
-        # Filter categories based on existing transaction type
+        # Filter categories including default categories based on transaction type
         qs = Category.objects.filter(
-            user=self.request.user,
+            Q(is_default=True) | Q(user=self.request.user),
             category_type=self.object.transaction_type
         )
 
@@ -315,7 +288,8 @@ class TransactionUpdateView(UpdateView):
         return form
 
 
-class TransactionDeleteView(DeleteView):
+
+class TransactionDeleteView(LoginRequiredMixin, DeleteView):
     model = Transaction
     template_name = 'accounts/transaction_confirm_delete.html'
     success_url = reverse_lazy('accounts:dashboard')
@@ -328,11 +302,11 @@ class TransactionDeleteView(DeleteView):
 # CATEGORY CRUD (HTML)
 # ---------------------------
 
-class CategoryCreateView(CreateView):
+class CategoryCreateView(LoginRequiredMixin, CreateView):
     model = Category
     fields = ['name', 'category_type']
     template_name = 'accounts/category_form.html'
-    success_url = reverse_lazy('accounts:dashboard')
+    success_url = reverse_lazy('accounts:categories')
 
     def form_valid(self, form):
         form.instance.user = self.request.user
@@ -343,23 +317,23 @@ class CategoryCreateView(CreateView):
                 self.request,
                 "Category already exists."
             )
-            return redirect('accounts:dashboard')
+            return redirect('accounts:category-add')
 
 
-class CategoryUpdateView(UpdateView):
+class CategoryUpdateView(LoginRequiredMixin, UpdateView):
     model = Category
     fields = ['name', 'category_type']
     template_name = 'accounts/category_form.html'
-    success_url = reverse_lazy('accounts:dashboard')
+    success_url = reverse_lazy('accounts:categories')
 
     def get_queryset(self):
         return Category.objects.filter(user=self.request.user)
 
 
-class CategoryDeleteView(DeleteView):
+class CategoryDeleteView(LoginRequiredMixin, DeleteView):
     model = Category
     template_name = 'accounts/category_confirm_delete.html'
-    success_url = reverse_lazy('accounts:dashboard')
+    success_url = reverse_lazy('accounts:categories')
 
     def get_queryset(self):
         return Category.objects.filter(user=self.request.user)
@@ -367,22 +341,23 @@ class CategoryDeleteView(DeleteView):
 
 @login_required
 def categories_view(request):
-    categories = Category.objects.filter(user=request.user).order_by('category_type', 'name')
+    categories = Category.objects.filter(
+        Q(user=request.user) | Q(is_default=True)
+    ).order_by('-is_default', 'category_type', 'name')
 
     return render(request, 'accounts/categories.html', {
         'categories': categories
     })
 
 
-
-
-
-
 @login_required
 def monthly_report_view(request):
     current_date = now()
-    month = int(request.GET.get('month', current_date.month))
-    year = int(request.GET.get('year', current_date.year))
+    try:
+        month = int(request.GET.get('month', current_date.month))
+        year = int(request.GET.get('year', current_date.year))
+    except (ValueError, TypeError):
+        month, year = current_date.month, current_date.year
 
     start_date = date(year, month, 1)
     end_date = date(year, month, monthrange(year, month)[1])
@@ -413,12 +388,23 @@ def monthly_report_view(request):
         .annotate(total=Sum('amount'))
     )
 
+    months_list = [
+        (1, 'January'), (2, 'February'), (3, 'March'), (4, 'April'),
+        (5, 'May'), (6, 'June'), (7, 'July'), (8, 'August'),
+        (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December')
+    ]
+
+    all_tx_years = Transaction.objects.filter(user=request.user).dates('date', 'year')
+    available_years = sorted(list({y.year for y in all_tx_years} | {current_date.year}))
+
     # -----------------------
     # Context
     # -----------------------
     context = {
         'month': month,
         'year': year,
+        'months_list': months_list,
+        'available_years': available_years,
         'income': float(income),
         'expense': float(expense),
         'savings': float(income - expense),
@@ -436,17 +422,20 @@ def monthly_report_view(request):
 
     return render(request, 'accounts/monthly_report.html', context)
 
+
         
 from openpyxl import Workbook
 from django.http import HttpResponse
-from datetime import date
-from calendar import monthrange
 
 
 @login_required
 def monthly_report_excel(request):
-    month = int(request.GET.get('month'))
-    year = int(request.GET.get('year'))
+    today = date.today()
+    try:
+        month = int(request.GET.get('month', today.month))
+        year = int(request.GET.get('year', today.year))
+    except (ValueError, TypeError):
+        month, year = today.month, today.year
 
     start_date = date(year, month, 1)
     end_date = date(year, month, monthrange(year, month)[1])
@@ -496,11 +485,19 @@ def monthly_report_excel(request):
 # BUDGET CRUD (HTML)
 # ---------------------------
 
-class BudgetCreateView(CreateView):
+class BudgetCreateView(LoginRequiredMixin, CreateView):
     model = Budget
     fields = ['category', 'monthly_limit', 'month', 'year']
     template_name = 'accounts/budget_form.html'
     success_url = reverse_lazy('accounts:dashboard')
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['category'].queryset = Category.objects.filter(
+            Q(is_default=True) | Q(user=self.request.user),
+            category_type=Category.EXPENSE
+        )
+        return form
 
     def form_valid(self, form):
         form.instance.user = self.request.user
@@ -512,9 +509,10 @@ class BudgetCreateView(CreateView):
                 self.request,
                 "A budget for this category already exists for the selected month."
             )
-            return redirect('accounts:dashboard')
+            return redirect('accounts:budget-add')
 
-class BudgetUpdateView(UpdateView):
+
+class BudgetUpdateView(LoginRequiredMixin, UpdateView):
     model = Budget
     fields = ['category', 'monthly_limit', 'month', 'year']
     template_name = 'accounts/budget_form.html'
@@ -523,8 +521,16 @@ class BudgetUpdateView(UpdateView):
     def get_queryset(self):
         return Budget.objects.filter(user=self.request.user)
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['category'].queryset = Category.objects.filter(
+            Q(is_default=True) | Q(user=self.request.user),
+            category_type=Category.EXPENSE
+        )
+        return form
 
-class BudgetDeleteView(DeleteView):
+
+class BudgetDeleteView(LoginRequiredMixin, DeleteView):
     model = Budget
     template_name = 'accounts/budget_confirm_delete.html'
     success_url = reverse_lazy('accounts:dashboard')
