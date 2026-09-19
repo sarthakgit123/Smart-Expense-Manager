@@ -97,10 +97,16 @@ def check_and_trigger_budget_alerts(user, category, month, year):
         spent = budget.get_spent_amount()
         if spent > budget.monthly_limit:
             if not budget.alert_sent:
-                # Trigger automated email to user's registered email
-                send_email_async(send_budget_alert, user, budget.id, spent)
+                # Trigger automated email to user's registered email.
+                # On serverless platforms (e.g. Vercel / AWS Lambda), daemon threads get killed
+                # as soon as the HTTP response returns. Direct execution ensures guaranteed delivery.
+                try:
+                    send_budget_alert(user, budget.id, spent)
+                except Exception as e:
+                    logger.error("Error triggering budget alert: %s", e)
         else:
             if budget.alert_sent:
                 budget.alert_sent = False
                 budget.save(update_fields=['alert_sent'])
+
 
