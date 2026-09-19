@@ -11,6 +11,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        Category.ensure_default_categories()
         return Category.objects.filter(Q(user=self.request.user) | Q(is_default=True))
 
     def perform_create(self, serializer):

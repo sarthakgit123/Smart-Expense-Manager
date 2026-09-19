@@ -244,6 +244,7 @@ class TransactionCreateView(LoginRequiredMixin, CreateView):
         return initial
 
     def get_form(self, form_class=None):
+        Category.ensure_default_categories()
         form = super().get_form(form_class)
 
         tx_type = (
@@ -276,6 +277,7 @@ class TransactionUpdateView(LoginRequiredMixin, UpdateView):
         return Transaction.objects.filter(user=self.request.user)
 
     def get_form(self, form_class=None):
+        Category.ensure_default_categories()
         form = super().get_form(form_class)
 
         # Filter categories including default categories based on transaction type
@@ -341,6 +343,7 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
 
 @login_required
 def categories_view(request):
+    Category.ensure_default_categories()
     categories = Category.objects.filter(
         Q(user=request.user) | Q(is_default=True)
     ).order_by('-is_default', 'category_type', 'name')
@@ -492,6 +495,7 @@ class BudgetCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('accounts:dashboard')
 
     def get_form(self, form_class=None):
+        Category.ensure_default_categories()
         form = super().get_form(form_class)
         form.fields['category'].queryset = Category.objects.filter(
             Q(is_default=True) | Q(user=self.request.user),
@@ -522,6 +526,7 @@ class BudgetUpdateView(LoginRequiredMixin, UpdateView):
         return Budget.objects.filter(user=self.request.user)
 
     def get_form(self, form_class=None):
+        Category.ensure_default_categories()
         form = super().get_form(form_class)
         form.fields['category'].queryset = Category.objects.filter(
             Q(is_default=True) | Q(user=self.request.user),

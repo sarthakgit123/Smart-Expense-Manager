@@ -1,6 +1,28 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+DEFAULT_CATEGORIES = [
+    # Income Categories
+    ('Salary', 'IN'),
+    ('Freelance & Consulting', 'IN'),
+    ('Investments & Dividends', 'IN'),
+    ('Business Revenue', 'IN'),
+    ('Gifts & Grants', 'IN'),
+    ('Other Income', 'IN'),
+    # Expense Categories
+    ('Food & Dining', 'EX'),
+    ('Groceries', 'EX'),
+    ('Housing & Rent', 'EX'),
+    ('Utilities & Bills', 'EX'),
+    ('Transportation & Fuel', 'EX'),
+    ('Healthcare & Fitness', 'EX'),
+    ('Entertainment & Leisure', 'EX'),
+    ('Shopping & Personal', 'EX'),
+    ('Education & Learning', 'EX'),
+    ('Travel & Vacations', 'EX'),
+    ('Savings & Investments', 'EX'),
+    ('Miscellaneous', 'EX'),
+]
 
 
 class Category(models.Model):
@@ -39,6 +61,25 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def ensure_default_categories(cls):
+        """
+        Failsafe method that checks and auto-seeds the 18 system default categories
+        if they are missing (e.g. on fresh production deployments without migrations).
+        """
+        try:
+            if not cls.objects.filter(is_default=True).exists():
+                for name, cat_type in DEFAULT_CATEGORIES:
+                    cls.objects.get_or_create(
+                        user=None,
+                        name=name,
+                        category_type=cat_type,
+                        defaults={'is_default': True}
+                    )
+        except Exception:
+            pass
+
 
 
 class Transaction(models.Model):
