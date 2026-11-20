@@ -225,6 +225,16 @@ Users link from the authenticated `/accounts/telegram/` page: generate a code,
 then send `/link CODE` to the Telegram bot. Codes expire, can only be used once,
 and cannot transfer a Telegram account already linked to another Django user.
 
+### n8n workflow
+
+An importable workflow and a step-by-step setup guide (BotFather, credentials,
+hosting, troubleshooting) are in [`n8n/`](n8n/README.md). To try the bot
+locally without Telegram or n8n:
+
+```powershell
+$env:USE_SQLITE="True"; python manage.py telegram_chat --telegram-user-id 111
+```
+
 ### Recommended: one chat endpoint
 
 n8n forwards every Telegram text message to a single endpoint and sends the

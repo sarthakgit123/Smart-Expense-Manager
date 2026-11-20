@@ -1,0 +1,163 @@
+{
+  "name": "Smart Expense Manager – Telegram bot",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "id": "406c81c6-e761-47f1-aa41-58151bcdbbd1",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 300],
+      "webhookId": "2f9b9e27-381d-45a6-9177-5f0f09153b58",
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Smart Expense Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1e178bb1-96ea-4cce-99fd-160bd069d99c",
+              "name": "django_base_url",
+              "value": "https://YOUR-PROJECT.vercel.app",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "a663847d-9d4b-4cf7-abd0-ab63beda5577",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 300],
+      "notes": "Set django_base_url to your Django PRODUCTION domain (no trailing slash), e.g. https://your-project.vercel.app. Vercel preview URLs are behind Vercel login and return 401. Secrets do NOT go here – they live in credentials."
+    },
+    {
+      "parameters": {
+        "operation": "sendChatAction",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "action": "typing"
+      },
+      "id": "b406a81b-660f-40ef-b893-0dc72826c64c",
+      "name": "Show typing…",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [440, 300],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Smart Expense Telegram Bot"
+        }
+      },
+      "notes": "Shows 'typing…' while Django processes the message (covers serverless cold starts)."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').item.json.django_base_url }}/api/telegram/message/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ telegram_user_id: $('Telegram Trigger').item.json.message.from.id, message_id: $('Telegram Trigger').item.json.message.message_id, text: $('Telegram Trigger').item.json.message.text || '', telegram_username: $('Telegram Trigger').item.json.message.from.username || '' }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "4081eb04-0156-4fa9-82ac-08946af53ebd",
+      "name": "Send to Django",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Smart Expense n8n secret"
+        }
+      },
+      "notes": "Header Auth credential: Name = X-N8N-Secret, Value = same as Django N8N_WEBHOOK_SECRET. Retries cover cold starts and brief outages; Django de-duplicates by message_id so retries never double-log."
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.reply_text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "reply_to_message_id": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+        }
+      },
+      "id": "d27c7633-98be-400e-a2ea-99dfbcbb5fd2",
+      "name": "Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [900, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Smart Expense Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "⚠️ Sorry, I couldn't reach the expense server right now. Nothing was saved – please send your message again in a minute.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "reply_to_message_id": "={{ $('Telegram Trigger').item.json.message.message_id }}"
+        }
+      },
+      "id": "4296d46e-5fcb-4b2b-8806-1f79624f748b",
+      "name": "Reply: server error",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [900, 420],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Smart Expense Telegram Bot"
+        }
+      },
+      "notes": "Runs only when Django is unreachable or returns 4xx/5xx after all retries (e.g. wrong X-N8N-Secret = 401). Check the execution log in n8n."
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{ "node": "Config", "type": "main", "index": 0 }]]
+    },
+    "Config": {
+      "main": [[{ "node": "Show typing…", "type": "main", "index": 0 }]]
+    },
+    "Show typing…": {
+      "main": [[{ "node": "Send to Django", "type": "main", "index": 0 }]]
+    },
+    "Send to Django": {
+      "main": [
+        [{ "node": "Reply", "type": "main", "index": 0 }],
+        [{ "node": "Reply: server error", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "pinData": {},
+  "tags": []
+}
