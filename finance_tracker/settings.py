@@ -91,8 +91,11 @@ WSGI_APPLICATION = 'finance_tracker.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# USE_SQLITE=True forces the local SQLite file even when .env has DATABASE_URL.
+# (In PowerShell, `$env:DATABASE_URL=""` deletes the variable, so .env re-supplies it.)
+USE_SQLITE = os.getenv("USE_SQLITE", "False") == "True"
 DATABASE_URL = os.getenv("DATABASE_URL")
-if DATABASE_URL:
+if DATABASE_URL and not USE_SQLITE:
     DATABASES = {
         "default": dj_database_url.config(
             default=DATABASE_URL,
@@ -133,7 +136,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Local business timezone: "today" for Telegram entries and reports follows IST.
+TIME_ZONE = os.getenv("TIME_ZONE", "Asia/Kolkata")
 
 USE_I18N = True
 
@@ -214,4 +218,10 @@ SOCIALACCOUNT_PROVIDERS = {
 csrf_env = os.getenv("CSRF_TRUSTED_ORIGINS", "https://*.vercel.app,https://*.onrender.com")
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_env.split(",") if origin.strip()]
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Telegram / n8n integration
+N8N_WEBHOOK_SECRET = os.getenv("N8N_WEBHOOK_SECRET", "")
+TELEGRAM_LINK_CODE_TTL_MINUTES = int(os.getenv("TELEGRAM_LINK_CODE_TTL_MINUTES", "10"))
+# Public bot username from @BotFather (without "@"); used for the t.me deep link.
+TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "").strip().lstrip("@")

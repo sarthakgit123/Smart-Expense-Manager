@@ -7,6 +7,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView, DeleteView
+from django.views.decorators.http import require_POST
 from django.db import IntegrityError
 from django.contrib import messages
 from django.db.models import Sum, Q
@@ -542,3 +543,39 @@ class BudgetDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return Budget.objects.filter(user=self.request.user)
+
+
+@login_required
+def telegram_link_view(request):
+    """Renders the Telegram linking page and generates a link code on POST."""
+    from transactions.models import TelegramLink, TelegramLinkCode
+    from django.conf import settings
+
+    existing_link = TelegramLink.objects.filter(user=request.user).first()
+    bot_username = getattr(settings, 'TELEGRAM_BOT_USERNAME', '')
+    context = {
+        'existing_link': existing_link,
+        'bot_username': bot_username,
+        'bot_url': f'https://t.me/{bot_username}' if bot_username else '',
+    }
+
+    if request.method == 'POST':
+        ttl = getattr(settings, 'TELEGRAM_LINK_CODE_TTL_MINUTES', 10)
+        context['link_code'] = TelegramLinkCode.generate_for_user(request.user, ttl_minutes=ttl)
+
+    return render(request, 'accounts/telegram_link.html', context)
+
+
+@login_required
+@require_POST
+def telegram_unlink_view(request):
+    """Removes the user's Telegram link and voids any outstanding link codes."""
+    from transactions.models import TelegramLink, TelegramLinkCode
+
+    deleted, _ = TelegramLink.objects.filter(user=request.user).delete()
+    TelegramLinkCode.objects.filter(user=request.user, used=False).update(used=True)
+    if deleted:
+        messages.success(request, 'Telegram account unlinked. The bot can no longer add transactions for you.')
+    else:
+        messages.info(request, 'No Telegram account was linked.')
+    return redirect('accounts:telegram-link')

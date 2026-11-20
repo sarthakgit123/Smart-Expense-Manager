@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Link Telegram — Smart Expense Manager{% endblock %}
+
+{% block content %}
+
+<style>
+  .tg-page-container {
+    max-width: 540px;
+    margin: 36px auto;
+  }
+
+  .tg-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  }
+
+  .tg-card-header {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .tg-header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background: rgba(37, 162, 227, 0.14);
+    color: #25a2e3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+  }
+
+  .tg-card-body {
+    padding: 28px;
+  }
+
+  .tg-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+
+  .tg-status-linked {
+    background: rgba(34, 197, 94, 0.14);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+  }
+
+  .tg-status-unlinked {
+    background: rgba(248, 113, 113, 0.14);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.25);
+  }
+
+  .tg-info-block {
+    background: var(--bg-elevated, rgba(255,255,255,0.04));
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 0.88rem;
+    color: var(--text-secondary, #9ca3af);
+    line-height: 1.65;
+  }
+
+  .tg-info-block ol {
+    margin: 8px 0 0 18px;
+    padding: 0;
+  }
+
+  .tg-info-block li {
+    margin-bottom: 6px;
+  }
+
+  .tg-code-box {
+    background: rgba(37, 162, 227, 0.08);
+    border: 1px dashed rgba(37, 162, 227, 0.4);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .tg-code-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary, #9ca3af);
+    margin-bottom: 10px;
+  }
+
+  .tg-code-value {
+    font-family: 'Courier New', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #25a2e3;
+    letter-spacing: 0.18em;
+  }
+
+  .tg-code-expiry {
+    font-size: 0.78rem;
+    color: var(--text-secondary, #9ca3af);
+    margin-top: 8px;
+  }
+
+  .tg-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+    text-decoration: none;
+  }
+
+  .tg-btn:hover { opacity: 0.85; }
+
+  .tg-btn-primary {
+    background: #25a2e3;
+    color: #fff;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tg-linked-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: rgba(34, 197, 94, 0.07);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: var(--radius-md);
+    margin-bottom: 24px;
+    font-size: 0.88rem;
+    color: var(--text-primary, #e5e7eb);
+  }
+</style>
+
+<div class="tg-page-container">
+  <div class="tg-card">
+    <div class="tg-card-header">
+      <div class="tg-header-icon">
+        <i class="fab fa-telegram-plane"></i>
+      </div>
+      <div>
+        <div style="font-size:1.05rem; font-weight:700; color:var(--text-primary,#e5e7eb);">
+          Telegram Integration
+        </div>
+        <div style="font-size:0.8rem; color:var(--text-secondary,#9ca3af); margin-top:2px;">
+          Link your Telegram account to log expenses via bot
+        </div>
+      </div>
+    </div>
+
+    <div class="tg-card-body">
+
+      {% if existing_link %}
+        <span class="tg-status-badge tg-status-linked">
+          <i class="fas fa-check-circle"></i> Telegram Linked
+        </span>
+        <div class="tg-linked-info">
+          <i class="fab fa-telegram-plane" style="color:#25a2e3; font-size:1.1rem;"></i>
+          <div>
+            <div style="font-weight:600;">@{{ existing_link.telegram_username|default:"(no username)" }}</div>
+            <div style="font-size:0.78rem; color:var(--text-secondary,#9ca3af);">
+              Linked on {{ existing_link.linked_at|date:"N j, Y" }}
+            </div>
+          </div>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-secondary,#9ca3af); margin-bottom:20px;">
+          Your account is already linked. You can generate a new code below to re-link
+          with a different Telegram account, or unlink it completely.
+        </p>
+        <form method="post" action="{% url 'accounts:telegram-unlink' %}" style="margin-bottom:20px;"
+              onsubmit="return confirm('Unlink Telegram? The bot will stop adding transactions for you.');">
+          {% csrf_token %}
+          <button type="submit" class="tg-btn" style="width:100%; justify-content:center; background:transparent; color:#f43f5e; border:1px solid rgba(244,63,94,0.4);">
+            <i class="fas fa-unlink"></i>
+            Unlink Telegram
+          </button>
+        </form>
+      {% else %}
+        <span class="tg-status-badge tg-status-unlinked">
+          <i class="fas fa-times-circle"></i> Not linked
+        </span>
+      {% endif %}
+
+      {% if link_code %}
+        <div class="tg-code-box">
+          <div class="tg-code-label">Your one-time link code</div>
+          <div class="tg-code-value">{{ link_code.code }}</div>
+          <div class="tg-code-expiry">
+            <i class="fas fa-clock"></i> Expires {{ link_code.expires_at|date:"H:i" }}
+            &nbsp;·&nbsp; Send <code>/link {{ link_code.code }}</code> to the bot
+          </div>
+        </div>
+        {% if bot_url %}
+          <a href="{{ bot_url }}" target="_blank" rel="noopener noreferrer" class="tg-btn tg-btn-primary" style="margin-bottom:24px; text-decoration:none;">
+            <i class="fab fa-telegram-plane"></i>
+            Open @{{ bot_username }} in Telegram
+          </a>
+        {% endif %}
+      {% endif %}
+
+      <div class="tg-info-block">
+        <strong style="color:var(--text-primary,#e5e7eb);">How to link:</strong>
+        <ol>
+          <li>Click <strong>Generate Code</strong> below.</li>
+          <li>
+            {% if bot_url %}Open <a href="{{ bot_url }}" target="_blank" rel="noopener noreferrer" style="color:#25a2e3;">@{{ bot_username }}</a>{% else %}Open our Telegram bot{% endif %}
+            and send: <code>/link &lt;code&gt;</code>
+          </li>
+          <li>Your account will be linked instantly.</li>
+        </ol>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="tg-btn tg-btn-primary">
+          <i class="fab fa-telegram-plane"></i>
+          Generate Link Code
+        </button>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

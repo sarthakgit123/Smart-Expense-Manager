@@ -35,4 +35,6 @@ urlpatterns = [
 
 
 
+    path('telegram/', views.telegram_link_view, name='telegram-link'),
+    path('telegram/unlink/', views.telegram_unlink_view, name='telegram-unlink'),
 ]

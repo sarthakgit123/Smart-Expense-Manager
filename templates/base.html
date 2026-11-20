@@ -319,6 +319,9 @@
             <a href="{% url 'accounts:budget-add' %}" class="nav-action-btn {% if 'budget' in request.resolver_match.url_name %}active{% endif %}">
                 💰 Budget
             </a>
+            <a href="{% url 'accounts:telegram-link' %}" class="nav-action-btn {% if 'telegram' in request.resolver_match.url_name %}active{% endif %}">
+                ✈️ Telegram
+            </a>
             <a href="{% url 'accounts:transaction-add' %}" class="nav-action-btn nav-action-btn-primary">
                 + Transaction
             </a>

@@ -193,6 +193,61 @@ Visit **`http://127.0.0.1:8000/`** in your browser.
 
 ---
 
+## Telegram expense bot (n8n)
+
+The Django API accepts Telegram events only when n8n sends the shared secret in
+the `X-N8N-Secret` header. Generate a long random secret and configure the same
+value as `N8N_WEBHOOK_SECRET` in Django and n8n. Do not put it in a workflow
+message or commit it to source control. `TELEGRAM_LINK_CODE_TTL_MINUTES` controls
+the one-time linking code lifetime (default: 10 minutes).
+
+### Django and deployment setup
+
+Add these variables to the deployment environment (and to local `.env` for
+development):
+
+```env
+N8N_WEBHOOK_SECRET=<long-random-shared-secret>
+TELEGRAM_LINK_CODE_TTL_MINUTES=10
+TELEGRAM_BOT_USERNAME=<bot username from @BotFather, without @>
+TIME_ZONE=Asia/Kolkata
+```
+
+`TELEGRAM_BOT_USERNAME` adds an "Open @bot in Telegram" button to the linking
+page. `TIME_ZONE` decides what "today" means for Telegram entries that have no
+date. A **Telegram** link in the navbar opens the linking page, where users can
+also **unlink** their Telegram account. Telegram links, link codes (view-only)
+and processed messages are visible in the Django admin. All variables are
+listed in `.env.example`.
+
+Run `python manage.py migrate` during deployment, then restart the web service.
+Users link from the authenticated `/accounts/telegram/` page: generate a code,
+then send `/link CODE` to the Telegram bot. Codes expire, can only be used once,
+and cannot transfer a Telegram account already linked to another Django user.
+
+### n8n HTTP requests
+
+Send JSON requests with `X-N8N-Secret: <same shared secret>`:
+
+| Operation | Request |
+| --- | --- |
+| Confirm `/link CODE` | `POST /api/telegram/link/` with `telegram_user_id`, `telegram_username` (optional), and `code` |
+| Add income or expense | `POST /api/telegram/expense/` with `telegram_user_id`, Telegram `message_id`, `amount`, and `transaction_type` (`IN` or `EX`); optionally `category_name`, `description`, and `date` (`YYYY-MM-DD`) |
+| List categories | `GET /api/telegram/categories/?telegram_user_id=...` with optional `type=IN` or `type=EX` |
+
+Use `message.message_id` from the Telegram trigger as `message_id`, and the
+sender's numeric `message.from.id` as `telegram_user_id`. Do not accept either
+identity from user-entered message text. Duplicate message IDs for the same
+Telegram user return a successful duplicate response without creating another
+transaction. Categories resolve to that user's categories or the global
+defaults, and expenses continue through the existing budget alert signal.
+Transactions with no matching optional category are saved without a category.
+
+The separate `POST /api/telegram/link/generate/` endpoint uses the logged-in
+Django session and CSRF protection; the web page is the recommended user flow.
+
+---
+
 ## 🧪 Running Tests
 
 Execute Django's automated test suite to verify database models, signals, and security rules:
