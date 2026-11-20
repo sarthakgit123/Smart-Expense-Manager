@@ -211,11 +211,14 @@
             &nbsp;·&nbsp; Send <code>/link {{ link_code.code }}</code> to the bot
           </div>
         </div>
-        {% if bot_url %}
-          <a href="{{ bot_url }}" target="_blank" rel="noopener noreferrer" class="tg-btn tg-btn-primary" style="margin-bottom:24px; text-decoration:none;">
+        {% if bot_start_url %}
+          <a href="{{ bot_start_url }}" target="_blank" rel="noopener noreferrer" class="tg-btn tg-btn-primary" style="margin-bottom:8px; text-decoration:none;">
             <i class="fab fa-telegram-plane"></i>
-            Open @{{ bot_username }} in Telegram
+            Link instantly in @{{ bot_username }}
           </a>
+          <p style="font-size:0.78rem; color:var(--text-secondary,#9ca3af); margin-bottom:24px; text-align:center;">
+            Opens Telegram – tap <strong>Start</strong> and your account is linked. No typing needed.
+          </p>
         {% endif %}
       {% endif %}
 

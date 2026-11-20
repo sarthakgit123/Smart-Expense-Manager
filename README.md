@@ -225,9 +225,65 @@ Users link from the authenticated `/accounts/telegram/` page: generate a code,
 then send `/link CODE` to the Telegram bot. Codes expire, can only be used once,
 and cannot transfer a Telegram account already linked to another Django user.
 
-### n8n HTTP requests
+### Recommended: one chat endpoint
 
-Send JSON requests with `X-N8N-Secret: <same shared secret>`:
+n8n forwards every Telegram text message to a single endpoint and sends the
+returned `reply_text` back to the chat. Django handles parsing, commands,
+linking and duplicate protection.
+
+`POST /api/telegram/message/` with header `X-N8N-Secret` and JSON body:
+
+```json
+{
+  "telegram_user_id": 123456789,
+  "message_id": 42,
+  "text": "spent 250 on groceries yesterday",
+  "telegram_username": "optional_username"
+}
+```
+
+Map `telegram_user_id` from `message.from.id`, `message_id` from
+`message.message_id`, `text` from `message.text`, and `telegram_username` from
+`message.from.username`.
+
+The endpoint returns HTTP 200 for anything a user can send, so the workflow can
+always reply:
+
+```json
+{ "ok": true, "action": "transaction_created", "reply_text": "✅ Expense of ₹250 logged\n…", "transaction": { … } }
+```
+
+`action` is one of `transaction_created`, `duplicate`, `linked`, `link_error`,
+`not_linked`, `inactive`, `parse_error`, `help`, `summary`, `budget`, `recent`,
+`categories`, `undo` or `unknown_command`. A 401 means the secret is wrong; a
+400 means `telegram_user_id` or `message_id` is malformed.
+
+**What users can send**
+
+| Message | Result |
+| --- | --- |
+| `250 groceries` | Expense ₹250 in Groceries, dated today |
+| `spent 1,200 on petrol yesterday` | Expense in Transportation & Fuel, dated yesterday |
+| `+5000 salary` / `received 5000 salary` | Income in Salary |
+| `2.5k rent 01/11` · `₹99 netflix 2026-11-02` | `k` suffix, ₹/rs, DD/MM or YYYY-MM-DD dates |
+| `/link CODE` or `/start CODE` | Link the account (the website's **Link instantly** button sends `/start CODE` automatically) |
+| `/summary` · `/summary last` | Income, expenses, net and top categories for this month or last month |
+| `/budget` | Each budget's spending, with 🟢 🟠 🔴 status |
+| `/recent` | Last 5 transactions |
+| `/categories` | Categories that can be used |
+| `/undo` | Deletes the last transaction added from Telegram (a retried `/undo` is ignored) |
+| `/help` | Usage help |
+
+Categories are matched by name ("groceries"), by a word in the name ("food"
+matches "Food & Dining"), or by common aliases ("swiggy", "uber", "netflix",
+"petrol", and so on). The user's own categories come first. Unmatched expenses
+go to **Miscellaneous** and unmatched income goes to **Other Income**. Expense
+replies also include the category's budget status.
+
+### Structured endpoints (optional)
+
+These are useful when n8n parses the message itself (for example with an AI
+node). Send JSON requests with `X-N8N-Secret: <same shared secret>`:
 
 | Operation | Request |
 | --- | --- |

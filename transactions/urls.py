@@ -6,6 +6,7 @@ from .telegram_views import (
     confirm_link,
     create_telegram_transaction,
     list_telegram_categories,
+    telegram_message,
 )
 
 router = DefaultRouter()
@@ -19,4 +20,5 @@ urlpatterns = [
     path('telegram/link/', confirm_link, name='telegram-confirm-link'),
     path('telegram/expense/', create_telegram_transaction, name='telegram-expense'),
     path('telegram/categories/', list_telegram_categories, name='telegram-categories'),
+    path('telegram/message/', telegram_message, name='telegram-message'),
 ]

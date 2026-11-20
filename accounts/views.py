@@ -561,7 +561,11 @@ def telegram_link_view(request):
 
     if request.method == 'POST':
         ttl = getattr(settings, 'TELEGRAM_LINK_CODE_TTL_MINUTES', 10)
-        context['link_code'] = TelegramLinkCode.generate_for_user(request.user, ttl_minutes=ttl)
+        link_code = TelegramLinkCode.generate_for_user(request.user, ttl_minutes=ttl)
+        context['link_code'] = link_code
+        if bot_username:
+            # One-tap linking: Telegram sends "/start <CODE>" to the bot when the user taps Start.
+            context['bot_start_url'] = f'https://t.me/{bot_username}?start={link_code.code}'
 
     return render(request, 'accounts/telegram_link.html', context)
 
